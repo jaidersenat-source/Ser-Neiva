@@ -58,7 +58,7 @@
         }
 
         .panel-brand { display: flex; align-items: center; gap: 16px; }
-        .panel-logo  { height: 64px; width: auto; }
+        .panel-logo  { height: 100px; width: auto; }
 
         .panel-headline {
             font-family: 'DM Serif Display', serif;
@@ -127,7 +127,7 @@
         }
         @media (min-width: 1024px) { .mobile-brand { display: none; } }
 
-        .mobile-logo { height: 72px; width: auto; margin-bottom: 12px; }
+        .mobile-logo { height: 100px; width: auto; margin-bottom: 16px; }
         .mobile-brand-name {
             font-family: 'DM Serif Display', serif;
             font-size: 1.5rem; color: var(--primary); letter-spacing: .02em;

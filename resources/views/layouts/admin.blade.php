@@ -33,10 +33,10 @@
     {{-- Logo --}}
     <div class="sidebar-logo">
     <div class="flex items-center gap-3">
-        <img src="{{ asset('images/logo-sirn.png') }}"
-             alt="SIRN"
-             class="h-10 w-auto flex-shrink-0"
-             style="filter: brightness(0) invert(1);">
+           <img src="{{ asset('images/logo-sirn.png') }}"
+               alt="SIRN"
+               class="h-16 w-auto flex-shrink-0"
+               style="filter: brightness(0) invert(1);">
         <div class="leading-tight">
             <p class="text-white font-bold text-sm tracking-wide">SER</p>
             <p class="text-blue-300 text-xs font-normal">Sistema Estratégico Religioso</p>
