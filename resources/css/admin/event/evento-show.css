@@ -1,0 +1,191 @@
+ /* ── Hero card ── */
+    .iglesia-hero {
+        background: linear-gradient(135deg, #0F2563 0%, #1E3A8A 60%, #2548a8 100%);
+        border-radius: 18px;
+        padding: 24px;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(15,37,99,.28);
+    }
+    .iglesia-hero::before {
+        content: '✝';
+        position: absolute;
+        right: 24px; top: 50%;
+        transform: translateY(-50%);
+        font-size: 6rem;
+        color: rgba(255,255,255,.06);
+        pointer-events: none;
+        line-height: 1;
+    }
+
+    /* ── Info card ── */
+    .info-card {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #F1F5F9;
+        box-shadow: 0 1px 4px rgba(0,0,0,.05);
+        overflow: hidden;
+    }
+    .info-card-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid #F8FAFC;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .info-card-icon {
+        width: 30px; height: 30px;
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .info-card-title {
+        font-size: .82rem;
+        font-weight: 700;
+        color: #1E293B;
+        letter-spacing: -.01em;
+    }
+
+    /* ── Filas de datos ── */
+    .data-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 11px 18px;
+        border-bottom: 1px solid #F8FAFC;
+        transition: background .12s;
+    }
+    .data-row:last-child { border-bottom: none; }
+    .data-row:hover { background: #FAFBFC; }
+    .data-label {
+        font-size: .72rem;
+        font-weight: 600;
+        color: #94A3B8;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        flex-shrink: 0;
+        width: 110px;
+        padding-top: 1px;
+    }
+    .data-value {
+        font-size: .83rem;
+        font-weight: 500;
+        color: #334155;
+        flex: 1;
+        min-width: 0;
+        word-break: break-word;
+    }
+
+    /* ── Badges de estado ── */
+    .badge-activo {
+        display: inline-flex; align-items: center; gap: 5px;
+        background: #F0FDF4; color: #166534;
+        font-size: .72rem; font-weight: 700;
+        padding: 3px 10px; border-radius: 20px;
+        border: 1px solid #BBF7D0;
+    }
+    .badge-inactivo {
+        display: inline-flex; align-items: center; gap: 5px;
+        background: #FFF1F2; color: #9F1239;
+        font-size: .72rem; font-weight: 700;
+        padding: 3px 10px; border-radius: 20px;
+        border: 1px solid #FECDD3;
+    }
+
+    /* ── Botones de acción ── */
+    .btn-edit {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: #F59E0B;
+        color: #fff;
+        font-size: .8rem; font-weight: 700;
+        padding: 9px 18px; border-radius: 11px;
+        text-decoration: none;
+        box-shadow: 0 2px 8px rgba(245,158,11,.35);
+        transition: background .15s, transform .15s, box-shadow .15s;
+        white-space: nowrap;
+    }
+    .btn-edit:hover {
+        background: #FBBF24;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(245,158,11,.45);
+    }
+    .btn-edit:active { transform: scale(.97); }
+
+    .btn-back {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: #fff;
+        color: #64748B;
+        font-size: .8rem; font-weight: 600;
+        padding: 9px 16px; border-radius: 11px;
+        text-decoration: none;
+        border: 1px solid #E2E8F0;
+        transition: background .15s, color .15s, border-color .15s;
+        white-space: nowrap;
+    }
+    .btn-back:hover { background: #F8FAFC; color: #334155; border-color: #CBD5E1; }
+
+    .btn-delete {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: #FFF1F2;
+        color: #DC2626;
+        font-size: .8rem; font-weight: 600;
+        padding: 9px 16px; border-radius: 11px;
+        border: 1px solid #FECDD3;
+        cursor: pointer;
+        transition: background .15s, border-color .15s;
+        white-space: nowrap;
+    }
+    .btn-delete:hover { background: #FFE4E6; border-color: #FCA5A5; }
+
+    /* ── Coordenadas chip ── */
+    .coords-chip {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        padding: 5px 10px;
+        font-size: .75rem;
+        font-weight: 600;
+        color: #475569;
+        font-family: monospace;
+    }
+
+    /* ── Descripción card ── */
+    .desc-card {
+        background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+        border: 1px solid #FDE68A;
+        border-radius: 14px;
+        padding: 16px 18px;
+        border-left: 4px solid #F59E0B;
+    }
+
+    /* ── Mapa card ── */
+    #show-map {
+        width: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #E2E8F0;
+    }
+
+    /* ── Enlace a Maps ── */
+    .btn-maps {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: #fff;
+        border: 1px solid #E2E8F0;
+        color: #1E3A8A;
+        font-size: .75rem; font-weight: 600;
+        padding: 7px 14px; border-radius: 9px;
+        text-decoration: none;
+        transition: background .15s, border-color .15s;
+    }
+    .btn-maps:hover { background: #EFF6FF; border-color: #BFDBFE; }
+
+    /* ── Responsive action bar ── */
+    @media (max-width: 639px) {
+        .action-bar { flex-wrap: wrap; }
+        .btn-edit, .btn-back, .btn-delete { font-size: .75rem; padding: 8px 14px; }
+        .data-label { width: 90px; }
+        .iglesia-hero { padding: 18px; }
+        .iglesia-hero::before { font-size: 4rem; right: 14px; }
+    }

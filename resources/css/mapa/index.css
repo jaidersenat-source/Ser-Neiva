@@ -1,0 +1,823 @@
+/* ═══════════════════════════════════════════════════════
+   resources/css/mapa/index.css
+   Vista del Mapa – Responsive (mobile-first)
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Variables locales ── */
+:root {
+    --mobile-topbar-h: 52px;
+    --sidebar-w: 380px;
+    --color-primary: #1E3A8A;
+}
+
+/* ══════════════════════════════════════
+   BARRA SUPERIOR MÓVIL (search + hamburger)
+   Solo visible en < 768px
+══════════════════════════════════════ */
+#mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    height: var(--mobile-topbar-h);
+    flex-shrink: 0;
+    z-index: 1001; /* Asegura que esté por encima del mode-bar */
+}
+
+.topbar-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: .82rem;
+    cursor: pointer;
+}
+
+.topbar-list-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+/* Ocultar topbar en tablet/desktop */
+@media (min-width: 768px) {
+    #mobile-topbar {
+        display: none;
+    }
+}
+
+/* ══════════════════════════════════════
+   LAYOUT PRINCIPAL (#sirn-layout)
+   mobile: columna (topbar encima, mapa llena)
+   desktop: fila (sidebar izq + mapa der)
+══════════════════════════════════════ */
+#sirn-layout {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: calc(100% - var(--mobile-topbar-h)); /* resta topbar en móvil */
+    overflow: hidden;
+}
+
+@media (min-width: 768px) {
+    #sirn-layout {
+        flex-direction: row;
+        height: 100%; /* topbar oculto en desktop, usa 100% */
+    }
+}
+
+/* ══════════════════════════════════════
+   SIDEBAR / DRAWER (#panel-lateral)
+══════════════════════════════════════ */
+
+/* ─── MÓVIL: drawer desde abajo ─── */
+#panel-lateral {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 85vh;
+    max-height: 85vh;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, .15);
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    /* Animación: fuera de pantalla */
+    transform: translateY(100%);
+    transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+    will-change: transform;
+}
+
+#panel-lateral.drawer-open {
+    transform: translateY(0);
+}
+
+/* ─── TABLET / DESKTOP: sidebar fijo a la izq ─── */
+@media (min-width: 768px) {
+    #panel-lateral {
+        position: relative;
+        top: auto;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        width: var(--sidebar-w);
+        min-width: var(--sidebar-w);
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, .06);
+        transform: none;
+        transition: none;
+        z-index: 10;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ── Overlay del drawer (solo móvil) ── */
+#drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 499;
+    opacity: 0;
+    transition: opacity .3s;
+}
+#drawer-overlay.visible {
+    display: block;
+    opacity: 1;
+}
+@media (min-width: 768px) {
+    #drawer-overlay { display: none !important; }
+}
+
+/* ── Drawer handle (solo móvil) ── */
+.drawer-handle {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0 4px;
+    cursor: grab;
+}
+.drawer-handle span {
+    width: 36px;
+    height: 4px;
+    background: #cbd5e1;
+    border-radius: 99px;
+}
+@media (min-width: 768px) {
+    .drawer-handle { display: none; }
+}
+
+/* ── Cabecera del panel ── */
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
+}
+.panel-header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem;
+    color: var(--color-primary);
+    font-weight: 700;
+}
+.panel-header-sub {
+    font-size: .7rem;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+.panel-close-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #64748b;
+    transition: background .15s;
+}
+.panel-close-btn:hover { background: #e2e8f0; }
+
+@media (min-width: 768px) {
+    .panel-close-btn { display: none; }
+}
+
+/* ── Stats strip ── */
+.stats-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #fafbfc;
+    border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
+}
+.stat-item { text-align: center; }
+.stat-num {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    line-height: 1;
+}
+.stat-num--amber { color: #D97706; }
+.stat-label {
+    font-size: .6rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-weight: 600;
+    margin-top: 2px;
+}
+.stat-sep {
+    width: 1px;
+    height: 24px;
+    background: #e2e8f0;
+}
+
+/* ── Buscador (visible solo desktop) ── */
+.panel-search {
+    display: none;
+    padding: 10px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
+}
+@media (min-width: 768px) {
+    .panel-search { display: block; }
+}
+
+.search-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    border: 1.5px solid transparent;
+    transition: border-color .15s, background .15s;
+}
+.search-inner:focus-within {
+    border-color: var(--color-primary);
+    background: #EFF6FF;
+}
+.search-inner input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: .82rem;
+    color: #334155;
+    font-family: inherit;
+}
+.search-inner input::placeholder { color: #94a3b8; }
+.search-clear {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+}
+
+/* ── Filtros ── */
+.filtros-wrap {
+    padding: 10px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
+}
+.filtros-label {
+    font-size: .68rem;
+    color: #94a3b8;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 8px;
+}
+.filtros-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.filtro-btn {
+    padding: 5px 12px;
+    background: #f1f5f9;
+    border: 1.5px solid transparent;
+    border-radius: 99px;
+    font-size: .72rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+}
+.filtro-btn:hover { background: #e2e8f0; }
+.filtro-btn.active {
+    background: #EFF6FF;
+    border-color: #3B82F6;
+    color: #1E3A8A;
+}
+
+/* ── Barra de resultados ── */
+.results-bar {
+    padding: 8px 16px;
+    background: #fafbfc;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: .72rem;
+    color: #94a3b8;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.results-bar span { color: var(--color-primary); font-weight: 800; }
+
+/* ── Lista de iglesias (scrollable) ── */
+#iglesias-list {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+}
+
+/* Estado centrado (cargando, error, sin resultados) */
+.state-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+}
+.state-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+/* ── Item de iglesia ── */
+.iglesia-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background .12s;
+    border-bottom: 1px solid #f8fafc;
+}
+.iglesia-item:hover { background: #f8fafc; }
+.iglesia-item:active { background: #f1f5f9; }
+
+.iglesia-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    font-weight: 800;
+}
+.iglesia-info {
+    flex: 1;
+    min-width: 0; /* permite truncar */
+}
+.iglesia-nombre {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.iglesia-denom {
+    font-size: .68rem;
+    font-weight: 700;
+    margin-top: 1px;
+}
+.iglesia-dir {
+    font-size: .7rem;
+    color: #94a3b8;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.iglesia-pastor {
+    font-size: .7rem;
+    color: #64748b;
+    margin-top: 1px;
+}
+.iglesia-arrow {
+    flex-shrink: 0;
+    color: #cbd5e1;
+}
+
+/* ══════════════════════════════════════
+   MAPA (#map-wrapper + #map)
+══════════════════════════════════════ */
+#map-wrapper {
+    position: relative;
+    flex: 1;
+    min-height: 0;       /* clave para que flex no desborde */
+    overflow: hidden;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+/* ── Botón recentrar ── */
+.map-ctrl-recenter {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 400;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform .15s;
+}
+.map-ctrl-recenter:hover { transform: scale(1.08); }
+
+/* ── Badge flotante (solo móvil) ── */
+#badge-flotante {
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 400;
+}
+.badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: white;
+    border-radius: 99px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .12);
+    font-size: .72rem;
+    font-weight: 700;
+    color: #334155;
+    white-space: nowrap;
+}
+.badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #34D399;
+    flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+    #badge-flotante { display: none; }
+}
+
+/* ── Botón "Ver lista" flotante (solo móvil) ── */
+#btn-ver-lista {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 400;
+    padding: 10px 20px;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 99px;
+    font-size: .8rem;
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(30, 58, 138, .35);
+    cursor: pointer;
+    transition: transform .15s;
+    white-space: nowrap;
+}
+#btn-ver-lista:hover { transform: translateX(-50%) scale(1.04); }
+
+@media (min-width: 768px) {
+    #btn-ver-lista { display: none; }
+}
+
+/* ══════════════════════════════════════
+   POPUP MÓVIL (detalle de iglesia)
+══════════════════════════════════════ */
+#popup-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    z-index: 599;
+}
+#popup-overlay.visible { display: block; }
+
+#popup-movil {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 75vh;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, .18);
+    z-index: 600;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+
+    transform: translateY(100%);
+    transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+}
+#popup-movil.open {
+    transform: translateY(0);
+}
+
+.popup-movil-inner {
+    padding: 6px 20px 28px;
+}
+
+/* En desktop ocultamos popup móvil completamente */
+@media (min-width: 768px) {
+    #popup-movil,
+    #popup-overlay { display: none !important; }
+}
+
+/* ══════════════════════════════════════
+   POPUP DE LEAFLET (desktop)
+══════════════════════════════════════ */
+.sirn-popup .leaflet-popup-content-wrapper {
+    border-radius: 14px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .15);
+    padding: 14px;
+}
+.sirn-popup .leaflet-popup-tip {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+}
+
+/* ══════════════════════════════════════
+   UTILIDADES (safe area para móviles
+   con notch / home indicator)
+══════════════════════════════════════ */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    #btn-ver-lista {
+        bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+    #popup-movil .popup-movil-inner {
+        padding-bottom: calc(28px + env(safe-area-inset-bottom));
+    }
+    #panel-lateral {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+ /* ══════════════════════════════════════
+   BARRA SUPERIOR MÓVIL — Búsqueda + Hamburger
+   Solo visible en < 768px
+══════════════════════════════════════ */
+#mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    height: var(--mobile-topbar-h, 52px);
+    flex-shrink: 0;
+    z-index: 20;
+}
+
+/* Contenedor del input de búsqueda */
+.topbar-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    min-width: 0;
+    border: 1.5px solid transparent;
+    transition: border-color .15s, background .15s;
+}
+.topbar-search:focus-within {
+    border-color: #3B82F6;
+    background: #EFF6FF;
+}
+
+/* Input real (reemplaza el <span> estático) */
+.topbar-search input {
+    flex: 1;
+    min-width: 0;      /* evita desborde en pantallas pequeñas */
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: .82rem;
+    color: #334155;
+    font-family: inherit;
+    -webkit-appearance: none;  /* quita estilo nativo en iOS */
+}
+.topbar-search input::placeholder { color: #94a3b8; }
+
+/* Botón limpiar búsqueda */
+.topbar-clear {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    color: #94a3b8;
+    transition: color .15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.topbar-clear:hover  { color: #475569; }
+.topbar-clear.hidden { display: none; }
+
+/* Botón hamburger */
+.topbar-list-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1E3A8A;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform .15s, opacity .15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.topbar-list-btn:active {
+    transform: scale(.92);
+    opacity: .85;
+}
+
+/* Ocultar en tablet/desktop */
+@media (min-width: 768px) {
+    #mobile-topbar { display: none; }
+}
+
+/* ══ TOGGLE MODE BAR ══════════════════════════════════════════ */
+/* Responsive: en móvil, el mode-bar va debajo del topbar */
+#mode-bar {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,0.8);
+    border-radius: 99px;
+    padding: 5px 6px;
+    box-shadow: 0 6px 28px rgba(30,58,138,.16), 0 1px 4px rgba(0,0,0,.06);
+    max-width: calc(100vw - 32px);
+    top: calc(var(--mobile-topbar-h, 52px) + 10px);
+}
+
+@media (max-width: 767px) {
+    #mode-bar {
+        position: static;
+        left: auto;
+        top: auto;
+        transform: none;
+        margin: 10px 0 0 0;
+        z-index: auto;
+        max-width: 100%;
+        box-shadow: 0 2px 8px rgba(30,58,138,.10);
+    }
+    #sirn-layout {
+        height: calc(100vh - var(--mobile-topbar-h, 52px));
+        min-height: 0;
+        overflow: hidden;
+    }
+    #panel-lateral {
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+}
+
+@media (min-width: 768px) {
+    #mode-bar {
+        top: calc(var(--nav-height, 56px) + 12px); /* en desktop, debajo del nav */
+    }
+}
+
+.mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 99px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #64748B;
+  transition: all .22s cubic-bezier(.4,0,.2,1);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+.mode-btn svg { width: 15px; height: 15px; flex-shrink: 0; transition: transform .22s ease; }
+.mode-btn:hover { color: #1E293B; background: #F8FAFF; }
+
+/* Iglesias activo → azul */
+.mode-btn.iglesias.active {
+  background: #1E3A8A;
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(30,58,138,.38);
+}
+.mode-btn.iglesias.active svg { transform: scale(1.1); }
+
+/* Eventos activo → dorado */
+.mode-btn.eventos.active {
+  background: #F59E0B;
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(245,158,11,.4);
+}
+.mode-btn.eventos.active svg { transform: scale(1.1); }
+
+/* Separador vertical */
+.mode-sep {
+  width: 1px; height: 22px;
+  background: #E2E8F0;
+  flex-shrink: 0;
+}
+
+/* Contador inline */
+#mode-counter {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: .73rem;
+  font-weight: 600;
+  color: #94A3B8;
+  padding: 0 6px;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: center;
+  transition: color .2s;
+}
+
+/* Spinner dentro del mode bar */
+#mode-spinner {
+  display: none;
+  width: 14px; height: 14px;
+  border: 2px solid #E2E8F0;
+  border-top-color: #1E3A8A;
+  border-radius: 50%;
+  animation: msp .65s linear infinite;
+  flex-shrink: 0;
+}
+#mode-spinner.eventos-spin { border-top-color: #F59E0B; }
+#mode-spinner.visible { display: block; }
+@keyframes msp { to { transform: rotate(360deg); } }
+
+/* Toast sin datos */
+#sirn-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  z-index: 999;
+  background: #1E293B;
+  color: #fff;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: .82rem;
+  font-weight: 600;
+  padding: 11px 22px;
+  border-radius: 99px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.22);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .28s ease, transform .28s ease;
+  white-space: nowrap;
+}
+#sirn-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Badge flotante actualizado para mostrar modo */
+.badge-pill-eventos { background: #FEF3C7; color: #92400E; }
+.badge-dot-eventos  { background: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,.25); }

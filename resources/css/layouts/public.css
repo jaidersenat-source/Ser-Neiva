@@ -1,0 +1,137 @@
+/* ═══════════════════════════════════════════════════════
+   resources/css/layouts/public.css
+   Layout público – Navbar + Page Body (responsive)
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Variables ── */
+:root {
+    --nav-h: 56px;       /* altura del navbar */
+    --color-primary: #1E3A8A;
+    --color-primary-dark: #172E73;
+    --font-heading: 'DM Serif Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+}
+
+/* ── Reset base ── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden; /* el scroll se controla dentro del page-body */
+}
+
+body {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ══════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════ */
+.sirn-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-h);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    z-index: 1000;
+    flex-shrink: 0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .2);
+}
+
+.nav-brand-name {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    color: white;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.nav-brand-sub {
+    font-size: .65rem;
+    color: rgba(255, 255, 255, .65);
+    letter-spacing: .03em;
+}
+
+/* Badge centro */
+.nav-badge {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .12);
+    color: rgba(255, 255, 255, .8);
+    font-size: .7rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+@media (min-width: 768px) {
+    .nav-badge { display: flex; }
+}
+
+.online-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #34D399;
+    flex-shrink: 0;
+}
+
+/* Botones navbar */
+.btn-admin {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: white;
+    color: var(--color-primary);
+    font-size: .72rem;
+    font-weight: 700;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all .15s;
+}
+.btn-admin:hover {
+    background: #EFF6FF;
+    transform: translateY(-1px);
+}
+
+.link-login {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1px solid rgba(255, 255, 255, .3);
+    color: white;
+    font-size: .72rem;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all .15s;
+}
+.link-login:hover {
+    background: rgba(255, 255, 255, .1);
+}
+
+.nav-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, .2);
+}
+
+/* ══════════════════════════════════════
+   PAGE BODY
+   Ocupa todo el viewport debajo del nav
+══════════════════════════════════════ */
+.page-body {
+    position: fixed;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}

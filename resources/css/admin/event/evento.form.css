@@ -1,0 +1,148 @@
+ /* (mismo CSS del _form original — solo se agrega la sección de ayudas) */
+    .btn-form-primary {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        background: linear-gradient(135deg, #0F2563, #1E3A8A);
+        color: #fff; font-size: .84rem; font-weight: 600;
+        padding: 11px 24px; border-radius: 12px;
+        border: none; cursor: pointer;
+        box-shadow: 0 3px 12px rgba(30,58,138,.3);
+        transition: opacity .15s, transform .12s, box-shadow .15s;
+        text-decoration: none;
+    }
+    .btn-form-primary:hover  { opacity:.9; transform:translateY(-1px); }
+    .btn-form-primary:active { transform:scale(.97); }
+
+    .btn-form-secondary {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        background: #EFF6FF; color: #1E3A8A;
+        font-size: .84rem; font-weight: 600;
+        padding: 11px 20px; border-radius: 12px;
+        border: 1px solid #BFDBFE; text-decoration: none;
+        transition: background .15s, transform .12s;
+    }
+    .btn-form-secondary:hover { background: #DBEAFE; transform:translateY(-1px); }
+
+    .btn-form-cancel {
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #fff; color: #64748B;
+        font-size: .84rem; font-weight: 500;
+        padding: 11px 20px; border-radius: 12px;
+        border: 1px solid #E2E8F0; text-decoration: none;
+        transition: background .15s, color .15s;
+    }
+    .btn-form-cancel:hover { background: #F8FAFC; color: #334155; }
+
+    .form-section {
+        background: #fff; border-radius: 18px;
+        border: 1px solid #F1F5F9;
+        box-shadow: 0 1px 4px rgba(0,0,0,.05);
+        overflow: hidden; margin-bottom: 16px;
+    }
+    .form-section-header {
+        display: flex; align-items: center; gap: 12px;
+        padding: 16px 20px; border-bottom: 1px solid #F8FAFC;
+        background: #FAFBFF;
+    }
+    .section-number {
+        width: 26px; height: 26px; background: #1E3A8A;
+        border-radius: 8px; display: flex; align-items: center; justify-content: center;
+        font-size: .7rem; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .section-title { font-size: .88rem; font-weight: 700; color: #1E293B; }
+    .section-sub   { font-size: .72rem; color: #94A3B8; margin-top: 1px; }
+    .form-section-body { padding: 20px; }
+
+    .field-group { margin-bottom: 16px; }
+    .field-group:last-child { margin-bottom: 0; }
+    .field-label {
+        display: block; font-size: .73rem; font-weight: 700;
+        color: #475569; letter-spacing: .02em; margin-bottom: 6px;
+    }
+    .field-required { color: #EF4444; margin-left: 2px; }
+    .field-input {
+        width: 100%; background: #F8FAFC; border: 1.5px solid #E2E8F0;
+        border-radius: 12px; padding: 10px 14px; font-size: .84rem; color: #334155;
+        font-family: inherit; transition: border-color .15s, box-shadow .15s, background .15s;
+        outline: none; -webkit-appearance: none;
+    }
+    .field-input:focus { border-color: #3B82F6; background: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+    .field-input.error { border-color: #F87171; background: #FFF5F5; }
+    select.field-input {
+        cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394A3B8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+        background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px;
+    }
+    textarea.field-input { resize: vertical; min-height: 90px; line-height: 1.5; }
+    .field-error {
+        display: flex; align-items: center; gap: 5px;
+        font-size: .7rem; font-weight: 600; color: #EF4444; margin-top: 5px;
+    }
+    .field-hint { font-size: .7rem; color: #94A3B8; margin-top: 4px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    @media (min-width: 540px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 640px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 900px) { .grid-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+    #map-selector {
+        width: 100%; height: 260px; border-radius: 14px;
+        border: 1.5px solid #E2E8F0; overflow: hidden; margin-top: 14px;
+        transition: border-color .15s, box-shadow .15s;
+    }
+    @media (min-width: 640px) { #map-selector { height: 300px; } }
+    .coords-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
+    .map-tip {
+        display: flex; align-items: center; gap: 7px;
+        background: #EFF6FF; border: 1px solid #BFDBFE;
+        border-radius: 10px; padding: 9px 13px;
+        font-size: .72rem; color: #1E40AF; margin-bottom: 12px;
+    }
+    .estado-preview { display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 600; padding: 4px 10px; border-radius: 20px; margin-left: 8px; transition: all .2s; }
+    .estado-preview.activo   { background: #F0FDF4; color: #166534; }
+    .estado-preview.inactivo { background: #FFF1F2; color: #9F1239; }
+
+    /* ── Checkboxes de ayudas ── */
+    .ayudas-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    @media (min-width: 480px) { .ayudas-grid { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 900px) { .ayudas-grid { grid-template-columns: 1fr 1fr 1fr; } }
+
+    .ayuda-checkbox-label {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 14px;
+        background: #F8FAFC;
+        border: 1.5px solid #E2E8F0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: border-color .15s, background .15s, box-shadow .15s;
+        user-select: none;
+    }
+    .ayuda-checkbox-label:hover {
+        border-color: #93C5FD;
+        background: #EFF6FF;
+    }
+    .ayuda-checkbox-label.checked {
+        border-color: #3B82F6;
+        background: #EFF6FF;
+        box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+    }
+    .ayuda-check {
+        width: 18px; height: 18px;
+        accent-color: #1E3A8A;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .ayuda-icono  { font-size: 1.1rem; flex-shrink: 0; }
+    .ayuda-nombre { font-size: .82rem; font-weight: 600; color: #334155; }
+    .ayuda-desc   { font-size: .68rem; color: #94A3B8; margin-top: 1px; }
+
+    .ayudas-toggle-all {
+        font-size: .72rem; font-weight: 600; color: #3B82F6;
+        background: none; border: none; cursor: pointer; padding: 0;
+        text-decoration: underline;
+    }
+    .ayudas-toggle-all:hover { color: #1E3A8A; }
