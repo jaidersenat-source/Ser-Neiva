@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\IglesiaController;
+use App\Http\Controllers\Admin\SportsVenueController;
 use App\Http\Controllers\MapaController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\EventoController;
@@ -31,6 +32,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(
     // === EVENTOS ===
     Route::resource('eventos',EventoController::class);
     Route::get('eventos-calendario', [EventoController::class, 'calendar'])->name('eventos.calendar');
+
+    // === ESCENARIOS DEPORTIVOS ===
+    Route::resource('sports_venues', SportsVenueController::class);
 });
 
 // Reemplaza la ruta dashboard por defecto de Breeze

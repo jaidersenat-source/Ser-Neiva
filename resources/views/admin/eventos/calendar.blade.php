@@ -1,506 +1,312 @@
 @extends('layouts.admin')
 
-@section('title', 'Calendario')
-@section('page-title', 'Calendario de Eventos')
-@section('page-subtitle', 'Visualiza y gestiona los eventos en un calendario interactivo')
+@section('title', 'Calendarios de Eventos')
+@section('page-title', 'Calendarios de Eventos')
+@section('page-subtitle', 'Eventos en Neiva y el departamento del Huila')
 
 @section('content')
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 
-@vite(['resources/css/admin/event/calendario.css'])
-
-<style>
-/* ── Tamaño fijo de celdas: siempre igual, con o sin eventos ── */
-.cal-table td {
-  height: 100px !important;
-  min-height: 100px !important;
-  max-height: 100px !important;
-  vertical-align: top;
-  overflow: hidden;
-}
-
-/* ── Dias CON eventos: borde izquierdo + fondo suave ── */
-.cal-table td.has-events {
-  background: linear-gradient(135deg, #EFF6FF 0%, #F8FAFF 100%);
-  border-left: 3px solid #3B82F6 !important;
-  box-shadow: inset 2px 0 8px rgba(59,130,246,.06);
-}
-
-/* ── Punto indicador bajo el numero ── */
-.cal-table td.has-events .day-num::after {
-  content: '';
-  display: block;
-  width: 5px;
-  height: 5px;
-  background: #3B82F6;
-  border-radius: 50%;
-  margin: 2px auto 0;
-}
-
-/* ── Hoy con eventos: punto blanco ── */
-.cal-table td.today.has-events .day-num::after {
-  background: #fff;
-}
-
-/* ── Chips de eventos: linea discreta, sin cambiar altura ── */
-.event-chip {
-  display: block;
-  font-size: .68rem;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-</style>
-
-<main class="page">
-  <nav class="breadcrumb">
-    <a href="{{ route('admin.eventos.index') }}">Eventos</a>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-    <span>Calendario</span>
-  </nav>
-
-  <div class="cal-card">
-    <div class="cal-topbar">
-      <div class="cal-title-group">
-        <div class="cal-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        </div>
-        <div class="cal-title-text">
-          <h2>Calendario de Eventos</h2>
-          <p>Haz clic en un evento para ver detalles</p>
-        </div>
-      </div>
-      <div class="cal-actions">
-        <button class="btn-icon" title="Filtros">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="10" y2="18"/></svg>
-        </button>
-        <button class="btn-primary" onclick="openNewEventModal()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nuevo Evento
-        </button>
-        <script>
-        document.querySelector('.btn-primary').onclick = function() {
-          window.location.href = '/admin/eventos/create';
-        };
-        </script>
-      </div>
-    </div>
-
-    <div class="cal-nav">
-      <div class="nav-left">
-        <button class="btn-nav" onclick="navigate(-1)">&#8249;</button>
-        <button class="btn-nav" onclick="navigate(1)">&#8250;</button>
-        <button class="btn-today" onclick="goToday()">Hoy</button>
-      </div>
-      <div class="cal-month-title" id="monthTitle">febrero de 2026</div>
-      <div class="view-tabs">
-        <button class="view-tab active" onclick="switchView('month',this)">Mes</button>
-        <button class="view-tab" onclick="switchView('week',this)">Semana</button>
-        <button class="view-tab" onclick="switchView('day',this)">Dia</button>
-        <button class="view-tab" onclick="switchView('list',this)">Lista</button>
-      </div>
-    </div>
-
-    <div id="monthView">
-      <div class="cal-grid">
-        <table class="cal-table">
-          <thead><tr id="weekHeaders"></tr></thead>
-          <tbody id="calBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div id="weekView" class="week-view" style="overflow-x:auto;">
-      <div class="week-grid" id="weekGrid"></div>
-    </div>
-
-    <div id="dayView" class="day-view-container">
-      <div class="day-view-title" id="dayViewTitle"></div>
-      <div class="day-event-list" id="dayEventList"></div>
-    </div>
-
-    <div id="listView" class="list-view">
-      <div id="listContent"></div>
-    </div>
-  </div>
-</main>
-
-<div class="modal-overlay" id="eventModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 id="modalTitle">Nuevo Evento</h3>
-      <button class="modal-close" onclick="closeModal()">x</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Nombre del evento</label>
-        <input class="form-input" type="text" placeholder="Ej: Conferencia Anual" id="eventName">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Tipo</label>
-        <select class="form-select" id="eventType">
-          <option value="retiro">Retiro</option>
-          <option value="conferencia">Conferencia</option>
-          <option value="culto">Culto</option>
-          <option value="campamento">Campamento</option>
-          <option value="otro">Otro</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Fecha inicio</label>
-          <input class="form-input" type="date" id="eventStart" value="2026-02-25">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Fecha fin</label>
-          <input class="form-input" type="date" id="eventEnd" value="2026-02-25">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Descripcion (opcional)</label>
-        <input class="form-input" type="text" placeholder="Breve descripcion..." id="eventDesc">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-      <button class="btn-primary" onclick="saveEvent()">Guardar Evento</button>
-    </div>
-  </div>
+<div class="flex items-center gap-2 text-xs text-slate-400 mb-5">
+    <a href="{{ route('admin.eventos.index') }}" class="hover:text-[#1E3A8A] transition-colors font-medium">Eventos</a>
+    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    </svg>
+    <span class="text-slate-600 font-medium">Calendarios</span>
 </div>
 
-<script>
-const DAYS_ES = ['dom','lun','mar','mie','jue','vie','sa'];
-const DAYS_FULL = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
-const MONTHS_ES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+{{-- Selector de pestañas --}}
+<div class="flex gap-2 mb-6 max-w-6xl">
+    <button id="tab-neiva" onclick="switchTab('neiva')"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all
+                   bg-[#1E3A8A] text-white shadow-md shadow-blue-200">
+        <span>&#x1F4CD;</span> Neiva
+    </button>
+    <button id="tab-huila" onclick="switchTab('huila')"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all
+                   bg-white text-slate-500 border border-slate-200 hover:border-violet-300 hover:text-violet-700">
+        <span>&#x1F5FA;&#xFE0F;</span> Huila
+    </button>
+</div>
 
+<div class="max-w-6xl">
 
-const TYPE_LABELS = { retiro:'Retiro', conferencia:'Conferencia', culto:'Culto', campamento:'Campamento', otro:'Otro', cumple:'Cumpleaños' };
-const TYPE_COLORS = { retiro:'#8B5CF6', conferencia:'#3B82F6', culto:'#1E3A8A', campamento:'#F59E0B', otro:'#6B7280', cumple:'#F43F5E' };
+    {{-- CALENDARIO 1: NEIVA --}}
+    <div id="panel-neiva" class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100"
+             style="background: linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);">
+            <span class="text-2xl">&#x1F4CD;</span>
+            <div>
+                <h2 class="text-white font-bold text-lg leading-tight">Eventos en Neiva</h2>
+                <p class="text-blue-200 text-xs mt-0.5">Eventos de iglesias con municipio = Neiva</p>
+            </div>
+        </div>
+        <div class="p-4 sm:p-6">
+            <div id="calendar-neiva"></div>
+        </div>
+    </div>
 
-let currentDate = new Date(2026, 1, 1);
-let today = new Date();
-let currentView = 'month';
-let events = [];
+    {{-- CALENDARIO 2: HUILA --}}
+    <div id="panel-huila" class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100"
+             style="background: linear-gradient(135deg,#7C3AED 0%,#6D28D9 100%);">
+            <span class="text-2xl">&#x1F5FA;&#xFE0F;</span>
+            <div>
+                <h2 class="text-white font-bold text-lg leading-tight">Eventos en Huila</h2>
+                <p class="text-violet-200 text-xs mt-0.5">Eventos de iglesias con departamento = Huila</p>
+            </div>
+        </div>
+        <div class="p-4 sm:p-6">
+            <div id="calendar-huila"></div>
+        </div>
+    </div>
 
-function fetchEvents() {
-  // 1. Obtener eventos normales
-  fetch('/api/eventos')
-    .then(res => res.json())
-    .then(data => {
-      events = data.map(ev => ({
-        id:       ev.id,
-        name:     ev.title,
-        type:     ev.tipo_evento,
-        start:    ev.start.substring(0,10),
-        end:      ev.end ? ev.end.substring(0,10) : ev.start.substring(0,10),
-        desc:     ev.extendedProps && ev.extendedProps.direccion_evento ? ev.extendedProps.direccion_evento : '',
-        iglesia:  ev.extendedProps && ev.extendedProps.iglesia          ? ev.extendedProps.iglesia          : '',
-        latitud:  ev.extendedProps && ev.extendedProps.latitud          ? ev.extendedProps.latitud          : '',
-        longitud: ev.extendedProps && ev.extendedProps.longitud         ? ev.extendedProps.longitud         : '',
-        estado:   ev.extendedProps && ev.extendedProps.estado           ? ev.extendedProps.estado           : '',
-      }));
-      // 2. Obtener cumpleaños de líderes de iglesias
-      fetch('/api/iglesias')
-        .then(res => res.json())
-        .then(igdata => {
-          if (igdata && igdata.data) {
-            igdata.data.forEach(ig => {
-              if (ig.fecha_nacimiento_lider) {
-                // Cumpleaños este año
-                const fecha = new Date(ig.fecha_nacimiento_lider);
-                const year = (new Date()).getFullYear();
-                const cumple = year + '-' + String(fecha.getMonth()+1).padStart(2,'0') + '-' + String(fecha.getDate()).padStart(2,'0');
-                events.push({
-                  id: 'cumple-'+ig.id,
-                  name: '🎂', // Solo icono de torta
-                  type: 'cumple',
-                  start: cumple,
-                  end: cumple,
-                  desc: 'Cumpleaños de ' + (ig.pastor_sacerdote || 'Líder') + (ig.nombre ? ' ('+ig.nombre+')' : ''),
-                  iglesia: ig.nombre,
-                  latitud: ig.latitud,
-                  longitud: ig.longitud,
-                  estado: '',
-                  cumple_full: '🎂 Cumpleaños ' + (ig.pastor_sacerdote || 'Líder') + (ig.nombre ? ' ('+ig.nombre+')' : ''),
-                });
-              }
-            });
-          }
-          render();
-        })
-        .catch(err => { console.error('Error al obtener iglesias:', err); render(); });
-    })
-    .catch(err => { console.error('Error al obtener eventos:', err); events = []; render(); });
-}
+</div>
 
-window.addEventListener('DOMContentLoaded', fetchEvents);
+{{-- Modal detalle evento --}}
+<div id="ev-modal-overlay"
+     class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
+     onclick="cerrarModal(event)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative"
+         onclick="event.stopPropagation()">
 
-function getEventsForDate(ds) {
-  return events.filter(e => ds >= e.start && ds <= e.end);
-}
+        {{-- Barra de acento coloreada --}}
+        <div id="ev-modal-accent" class="h-1.5 w-full"></div>
 
-function dateStr(y, m, d) {
-  return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-}
+        <div class="p-6">
+            <button onclick="cerrarModal()"
+                    class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
 
-function isToday(y, m, d) {
-  return today.getFullYear()===y && today.getMonth()===m && today.getDate()===d;
-}
+            {{-- Badge tipo --}}
+            <span id="ev-modal-badge"
+                  class="inline-block text-xs font-bold px-3 py-0.5 rounded-full mb-3"></span>
 
-function render() {
-  if      (currentView === 'month') renderMonth();
-  else if (currentView === 'week')  renderWeek();
-  else if (currentView === 'day')   renderDay();
-  else                              renderList();
-  updateTitle();
-}
+            {{-- Título --}}
+            <h3 id="ev-modal-title"
+                class="font-bold text-slate-800 text-lg pr-6 mb-4 leading-snug"></h3>
 
-function updateTitle() {
-  const y = currentDate.getFullYear(), m = currentDate.getMonth();
-  if (currentView === 'month') {
-    document.getElementById('monthTitle').textContent = MONTHS_ES[m] + ' de ' + y;
-  } else if (currentView === 'week') {
-    const ws = getWeekStart(currentDate);
-    const we = new Date(ws); we.setDate(we.getDate()+6);
-    document.getElementById('monthTitle').textContent = ws.getDate() + ' - ' + we.getDate() + ' ' + MONTHS_ES[we.getMonth()] + ' ' + we.getFullYear();
-  } else if (currentView === 'day') {
-    document.getElementById('monthTitle').textContent = DAYS_FULL[currentDate.getDay()] + ', ' + currentDate.getDate() + ' ' + MONTHS_ES[currentDate.getMonth()] + ' ' + currentDate.getFullYear();
-  } else {
-    document.getElementById('monthTitle').textContent = MONTHS_ES[m] + ' de ' + y;
-  }
-}
+            {{-- Filas de datos --}}
+            <div id="ev-modal-body" class="space-y-2.5 text-sm text-slate-600"></div>
 
-function renderMonth() {
-  const y = currentDate.getFullYear(), m = currentDate.getMonth();
-  const startDow = new Date(y, m, 1).getDay();
-
-  document.getElementById('weekHeaders').innerHTML = DAYS_ES.map(d => '<th>' + d + '</th>').join('');
-
-  let html = '';
-  let day = 1 - startDow;
-
-  for (let row = 0; row < 6; row++) {
-    const firstDayOfRow = new Date(y, m, 1 - startDow + row * 7);
-    if (firstDayOfRow.getMonth() > m && firstDayOfRow.getFullYear() >= y) break;
-
-    let rowHtml = '';
-    for (let col = 0; col < 7; col++, day++) {
-      const d  = new Date(y, m, day);
-      const dy = d.getFullYear(), dm = d.getMonth(), dd = d.getDate();
-      const ds = dateStr(dy, dm, dd);
-
-      const evs      = getEventsForDate(ds);
-      const isOther  = dm !== m;
-      const hasEvts  = evs.length > 0 && !isOther;
-
-      // Clases de la celda
-      let cls = '';
-      if (isToday(dy, dm, dd)) cls += ' today';
-      if (isOther)              cls += ' other-month';
-      if (hasEvts)              cls += ' has-events';   // <-- resaltado
-
-      // Chips (max 2, coloreados por tipo)
-      let chips = evs.slice(0,2).map(e => {
-        const color = TYPE_COLORS[(e.type||'').toLowerCase()] || '#6B7280';
-        return '<span class="event-chip" style="background:' + color + '18;color:' + color + ';border-left:2px solid ' + color + ';" title="' + e.name + '">' + e.name + '</span>';
-      }).join('');
-      if (evs.length > 2) {
-        chips += '<span class="event-chip" style="background:#F1F5F9;color:#64748B;">+' + (evs.length-2) + ' mas</span>';
-      }
-
-      rowHtml += '<td class="' + cls.trim() + '" onclick="clickDay(\'' + ds + '\')">';
-      rowHtml += '<div class="day-num">' + dd + '</div>';
-      rowHtml += chips;
-      rowHtml += '</td>';
-    }
-    html += '<tr>' + rowHtml + '</tr>';
-  }
-
-  document.getElementById('calBody').innerHTML = html;
-}
-
-function getWeekStart(d) {
-  const s = new Date(d);
-  s.setDate(s.getDate() - s.getDay());
-  s.setHours(0,0,0,0);
-  return s;
-}
-
-function renderWeek() {
-  const ws = getWeekStart(currentDate);
-  let html = '';
-  for (let i=0; i<7; i++) {
-    const d = new Date(ws); d.setDate(d.getDate()+i);
-    const cls = isToday(d.getFullYear(),d.getMonth(),d.getDate()) ? 'today-header' : '';
-    html += '<div class="week-day-header ' + cls + '">' + DAYS_ES[i] + '<br><strong>' + d.getDate() + '</strong></div>';
-  }
-  for (let i=0; i<7; i++) {
-    const d  = new Date(ws); d.setDate(d.getDate()+i);
-    const ds = dateStr(d.getFullYear(), d.getMonth(), d.getDate());
-    const cls = isToday(d.getFullYear(),d.getMonth(),d.getDate()) ? 'today' : '';
-    const evs = getEventsForDate(ds);
-    const chips = evs.map(e => {
-      const color = TYPE_COLORS[(e.type||'').toLowerCase()] || '#6B7280';
-      return '<span class="event-chip" style="background:' + color + '18;color:' + color + ';border-left:2px solid ' + color + ';">' + e.name + '</span>';
-    }).join('');
-    html += '<div class="week-day-col ' + cls + '"><div class="week-day-num">' + d.getDate() + '</div>' + chips + '</div>';
-  }
-  document.getElementById('weekGrid').innerHTML = html;
-}
-
-function renderDay() {
-  const d  = currentDate;
-  const ds = dateStr(d.getFullYear(), d.getMonth(), d.getDate());
-  const evs = getEventsForDate(ds);
-
-  document.getElementById('dayViewTitle').textContent =
-    DAYS_FULL[d.getDay()] + ', ' + d.getDate() + ' de ' + MONTHS_ES[d.getMonth()];
-
-  if (evs.length === 0) {
-    document.getElementById('dayEventList').innerHTML =
-      '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>No hay eventos para este dia</div>';
-    return;
-  }
-
-  document.getElementById('dayEventList').innerHTML = evs.map(e => {
-    const color     = TYPE_COLORS[(e.type||'').toLowerCase()] || '#6B7280';
-    const typeLabel = TYPE_LABELS[(e.type||'').toLowerCase()] || e.type;
-    let html = '<div class="day-event-card" style="display:flex;gap:12px;padding:14px;border:1px solid #E2E8F0;border-radius:10px;margin-bottom:10px;border-left:4px solid ' + color + ';">';
-    html += '<div style="flex:1;min-width:0;">';
-    // Si es cumpleaños, mostrar el texto completo solo en el detalle
-    if (e.type === 'cumple') {
-      html += '<h4 style="margin:0 0 6px;font-size:.95rem;font-weight:700;color:#1E293B;">' + (e.cumple_full || '🎂 Cumpleaños') + '</h4>';
-    } else {
-      html += '<h4 style="margin:0 0 6px;font-size:.95rem;font-weight:700;color:#1E293B;">' + e.name + '</h4>';
-    }
-    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">';
-    if (typeLabel) html += '<span style="font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:99px;background:' + color + '18;color:' + color + ';">' + typeLabel + '</span>';
-    if (e.estado)  html += '<span style="font-size:.72rem;font-weight:600;padding:2px 10px;border-radius:99px;background:#F0FDF4;color:#16A34A;">' + e.estado + '</span>';
-    html += '</div>';
-    if (e.iglesia) html += '<p style="margin:3px 0;font-size:.8rem;color:#475569;"><strong>Iglesia:</strong> ' + e.iglesia + '</p>';
-    if (e.desc)    html += '<p style="margin:3px 0;font-size:.8rem;color:#475569;"><strong>' + (e.type === 'cumple' ? 'Descripción' : 'Dirección') + ':</strong> ' + e.desc + '</p>';
-    html += '<p style="margin:3px 0;font-size:.8rem;color:#94A3B8;">' + e.start + (e.end && e.end !== e.start ? ' &mdash; ' + e.end : '') + '</p>';
-    html += '</div>';
-    html += '</div>';
-    return html;
-  }).join('');
-}
-
-function renderList() {
-  const y = currentDate.getFullYear(), m = currentDate.getMonth();
-  const filtered = events
-    .filter(e => e.start.startsWith(y + '-' + String(m+1).padStart(2,'0')))
-    .sort((a,b) => a.start.localeCompare(b.start));
-
-  if (filtered.length === 0) {
-    document.getElementById('listContent').innerHTML =
-      '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>No hay eventos para mostrar</div>';
-    return;
-  }
-
-  const label = MONTHS_ES[m].charAt(0).toUpperCase() + MONTHS_ES[m].slice(1) + ' de ' + y;
-  const rows  = filtered.map(e => {
-    const dt    = new Date(e.start + 'T12:00:00');
-    const color = TYPE_COLORS[(e.type||'').toLowerCase()] || '#6B7280';
-    return '<div class="list-event">' +
-      '<div class="list-date-box"><div class="list-day">' + dt.getDate() + '</div><div class="list-dow">' + DAYS_ES[dt.getDay()] + '</div></div>' +
-      '<div class="list-event-info">' +
-        '<h4>' + e.name + '</h4>' +
-        (e.iglesia ? '<div style="font-size:.75rem;color:#64748B;">' + e.iglesia + '</div>' : '') +
-        '<div class="list-type" style="color:' + color + ';">' + (TYPE_LABELS[(e.type||'').toLowerCase()] || e.type) + '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
-
-  document.getElementById('listContent').innerHTML =
-    '<div class="list-month-group"><div class="list-month-label">' + label + '</div>' + rows + '</div>';
-}
-
-function navigate(dir) {
-  if      (currentView === 'month') currentDate.setMonth(currentDate.getMonth() + dir);
-  else if (currentView === 'week')  currentDate.setDate(currentDate.getDate() + dir * 7);
-  else if (currentView === 'day')   currentDate.setDate(currentDate.getDate() + dir);
-  else                              currentDate.setMonth(currentDate.getMonth() + dir);
-  render();
-}
-
-function goToday() {
-  currentDate = new Date(today);
-  if (currentView === 'month') currentDate.setDate(1);
-  render();
-}
-
-function switchView(view, btn) {
-  currentView = view;
-  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  ['monthView','weekView','dayView','listView'].forEach(id => {
-    const el = document.getElementById(id);
-    el.style.display = 'none';
-    el.classList.remove('active');
-  });
-  if (view === 'month') {
-    document.getElementById('monthView').style.display = '';
-    currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  } else if (view === 'week') {
-    document.getElementById('weekView').style.display = '';
-    document.getElementById('weekView').classList.add('active');
-    // Al cambiar a semana, mostrar la semana de hoy
-    currentDate = new Date(today);
-  } else if (view === 'day') {
-    document.getElementById('dayView').style.display = '';
-    document.getElementById('dayView').classList.add('active');
-  } else {
-    document.getElementById('listView').style.display = '';
-    document.getElementById('listView').classList.add('active');
-  }
-  render();
-}
-
-function clickDay(ds) {
-  currentDate = new Date(ds + 'T12:00:00');
-  switchView('day', document.querySelectorAll('.view-tab')[2]);
-}
-
-function openNewEventModal() {
-  document.getElementById('modalTitle').textContent = 'Nuevo Evento';
-  document.getElementById('eventName').value = '';
-  document.getElementById('eventDesc').value = '';
-  document.getElementById('eventModal').classList.add('open');
-}
-
-function closeModal() {
-  document.getElementById('eventModal').classList.remove('open');
-}
-
-function saveEvent() {
-  const name = document.getElementById('eventName').value.trim();
-  if (!name) return;
-  events.push({
-    id:    Date.now(),
-    name,
-    type:  document.getElementById('eventType').value,
-    start: document.getElementById('eventStart').value,
-    end:   document.getElementById('eventEnd').value,
-    desc:  document.getElementById('eventDesc').value.trim(),
-  });
-  closeModal();
-  render();
-}
-
-document.getElementById('eventModal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
-// Init
-document.getElementById('weekView').style.display = 'none';
-document.getElementById('dayView').style.display = 'none';
-document.getElementById('listView').style.display = 'none';
-render();
-</script>
+            {{-- Enlace a detalle completo (solo en eventos reales) --}}
+            <a id="ev-modal-link" href="#"
+               class="mt-5 flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">
+                Ver detalles completos
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</div>
 
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const LOCALE = {
+        locale: 'es',
+        buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día', list: 'Lista' },
+        allDayText: 'Todo el día',
+        moreLinkText: function(n){ return '+' + n + ' más'; },
+    };
+
+    const TYPE_LABELS = { retiro:'Retiro', conferencia:'Conferencia', culto:'Culto', campamento:'Campamento', otro:'Otro' };
+    const TYPE_COLORS = { retiro:'#8B5CF6', conferencia:'#3B82F6', culto:'#1E3A8A', campamento:'#F59E0B', otro:'#6B7280' };
+
+    function abrirModal(accentColor, badge, badgeStyle, title, rows, linkHref) {
+        document.getElementById('ev-modal-accent').style.background = accentColor;
+        const badgeEl = document.getElementById('ev-modal-badge');
+        badgeEl.textContent = badge;
+        badgeEl.style.cssText = badgeStyle;
+        document.getElementById('ev-modal-title').textContent = title;
+        document.getElementById('ev-modal-body').innerHTML = rows || '<p class="text-slate-400 text-sm">Sin información adicional.</p>';
+        const link = document.getElementById('ev-modal-link');
+        if (linkHref) { link.href = linkHref; link.style.display = ''; }
+        else          { link.style.display = 'none'; }
+        document.getElementById('ev-modal-overlay').classList.remove('hidden');
+        document.getElementById('ev-modal-overlay').classList.add('flex');
+    }
+
+    function fmtDate(d) {
+        if (!d) return '';
+        return d.toLocaleDateString('es-CO', { day:'numeric', month:'long', year:'numeric' });
+    }
+
+    function evRow(label, value) {
+        return `<div class="flex gap-2">
+            <span class="font-semibold text-slate-700 shrink-0 w-24">${label}:</span>
+            <span class="text-slate-600">${value}</span>
+        </div>`;
+    }
+
+    function onEventClick(info) {
+        const id = info.event.id;
+        const p  = info.event.extendedProps;
+
+        if (String(id).startsWith('cumple-')) {
+            let rows = '';
+            if (p.iglesia)      rows += evRow('Iglesia',   p.iglesia);
+            if (p.municipality) rows += evRow('Municipio', p.municipality);
+            abrirModal('#F43F5E', '🎂 Cumpleaños', 'background:#FFF1F2;color:#F43F5E;', info.event.title, rows, null);
+            return;
+        }
+
+        // Evento real
+        const tipo  = (p.tipo_evento || 'otro').toLowerCase();
+        const color = TYPE_COLORS[tipo] || '#6B7280';
+        const label = TYPE_LABELS[tipo] || p.tipo_evento || 'Evento';
+
+        const startFmt = fmtDate(info.event.start);
+        let endFmt = '';
+        if (info.event.end) {
+            const d = new Date(info.event.end);
+            d.setDate(d.getDate() - 1); // FullCalendar end es exclusivo
+            const d0 = fmtDate(d);
+            if (d0 !== startFmt) endFmt = d0;
+        }
+
+        let rows = '';
+        rows += evRow('Fecha', startFmt + (endFmt ? ' — ' + endFmt : ''));
+        if (p.iglesia)          rows += evRow('Iglesia',   p.iglesia);
+        if (p.direccion_evento) rows += evRow('Dirección', p.direccion_evento);
+        if (p.estado)           rows += evRow('Estado',    p.estado);
+
+        abrirModal(color, label, `background:${color}18;color:${color};`, info.event.title, rows, '/admin/eventos/' + id);
+    }
+
+    const BASE_CONFIG = {
+        ...LOCALE,
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listMonth',
+        },
+        height: 'auto',
+        eventClick: onEventClick,
+        loading: function(isLoading) {
+            // nothing
+        },
+    };
+
+    const calNeiva = new FullCalendar.Calendar(
+        document.getElementById('calendar-neiva'),
+        {
+            ...BASE_CONFIG,
+            events: '/api/eventos/neiva',
+            eventColor: '#2563EB',
+        }
+    );
+    calNeiva.render();
+
+    const calHuila = new FullCalendar.Calendar(
+        document.getElementById('calendar-huila'),
+        {
+            ...BASE_CONFIG,
+            events: '/api/eventos/huila',
+            eventColor: '#7C3AED',
+        }
+    );
+    calHuila.render();
+
+    // Ocultar Huila inicialmente (DESPUÉS de render para que tenga dimensiones correctas)
+    document.getElementById('panel-huila').classList.add('hidden');
+
+    // ── Tabs: mostrar un calendario a la vez ──
+    window.switchTab = function(tab) {
+        const isNeiva = tab === 'neiva';
+
+        document.getElementById('panel-neiva').classList.toggle('hidden', !isNeiva);
+        document.getElementById('panel-huila').classList.toggle('hidden',  isNeiva);
+
+        // Estilos activo / inactivo
+        const btnActive   = isNeiva ? 'tab-neiva' : 'tab-huila';
+        const btnInactive = isNeiva ? 'tab-huila' : 'tab-neiva';
+        const activeColor = isNeiva ? ['bg-[#1E3A8A]','text-white','shadow-md','shadow-blue-200']
+                                    : ['bg-[#7C3AED]','text-white','shadow-md','shadow-violet-200'];
+
+        document.getElementById(btnActive).className =
+            'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all '
+            + activeColor.join(' ');
+        document.getElementById(btnInactive).className =
+            'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all '
+            + 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400 hover:text-slate-700';
+
+        // FullCalendar necesita recalcular tamaño al hacerse visible
+        setTimeout(() => {
+            if (isNeiva) { calNeiva.updateSize(); }
+            else         { calHuila.updateSize(); }
+        }, 100);
+    };
+
+    // ── Cargar cumpleaños de líderes como fuente de eventos ──
+    fetch('/api/iglesias')
+        .then(r => r.json())
+        .then(res => {
+            const year    = new Date().getFullYear();
+            const evNeiva = [];
+            const evHuila = [];
+
+            (res.data || []).forEach(ig => {
+                // Soportar ambos campos: pastor_birth_date (importadas) y fecha_nacimiento_lider (legado)
+                const rawDate = ig.pastor_birth_date || ig.fecha_nacimiento_lider;
+                if (!rawDate) return;
+
+                const raw = new Date(rawDate + 'T12:00:00');
+                if (isNaN(raw)) return;
+
+                const start = year + '-'
+                    + String(raw.getMonth() + 1).padStart(2, '0') + '-'
+                    + String(raw.getDate()).padStart(2, '0');
+
+                const nombrePastor  = ig.pastor_sacerdote || '';
+                const nombreIglesia = ig.nombre           || '';
+
+                const ev = {
+                    id:    'cumple-' + ig.id,
+                    title: '\uD83C\uDF82 ' + (nombrePastor || nombreIglesia),
+                    start,
+                    end:   start,
+                    color: '#F43F5E',
+                    extendedProps: {
+                        iglesia:      nombreIglesia,
+                        tipo_evento:  'Cumplea\u00f1os',
+                        municipality: ig.municipality,
+                        department:   ig.department,
+                    },
+                };
+
+                const mun = (ig.municipality || '').normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+                const dep = (ig.department  || '').normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+                if (mun === 'neiva') evNeiva.push(ev);
+                if (dep === 'huila') evHuila.push(ev);
+            });
+
+            // addEventSource garantiza que los eventos persistan aunque el panel esté oculto
+            if (evNeiva.length) calNeiva.addEventSource(evNeiva);
+            if (evHuila.length) calHuila.addEventSource(evHuila);
+        })
+        .catch(err => console.error('Error cargando cumpleaños:', err))
+        .finally(() => {
+            document.getElementById('panel-huila').classList.add('hidden');
+        });
+});
+
+function cerrarModal(e) {
+    if (e && e.target !== document.getElementById('ev-modal-overlay')) return;
+    document.getElementById('ev-modal-overlay').classList.add('hidden');
+    document.getElementById('ev-modal-overlay').classList.remove('flex');
+}
+</script>
+@endpush

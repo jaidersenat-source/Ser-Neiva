@@ -1,8 +1,15 @@
 @extends('layouts.admin')
 
-@section('title', $iglesia->nombre)
-@section('page-title', $iglesia->nombre)
-@section('page-subtitle', $iglesia->denominacion)
+@php
+    $nombre     = $iglesia->official_name ?? $iglesia->nombre ?? 'Sin nombre';
+    $denom      = $iglesia->denomination  ?? $iglesia->denominacion ?? '';
+    $status     = $iglesia->church_status ?? $iglesia->estado ?? 'Active';
+    $isActiva   = in_array($status, ['Active', 'activo']);
+@endphp
+
+@section('title', $nombre)
+@section('page-title', $nombre)
+@section('page-subtitle', $denom)
 
 @section('content')
 
@@ -13,56 +20,53 @@
 ═══════════════════════════ --}}
 <div class="iglesia-hero mb-5">
     <div class="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="min-w-0">
+        <div class="min-w-0 flex items-start gap-4">
+            {{-- Foto de la iglesia --}}
+            @if($iglesia->photo)
+                <img src="{{ Storage::url($iglesia->photo) }}"
+                     alt="Foto de {{ $nombre }}"
+                     class="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 object-cover rounded-2xl
+                            border-2 border-white/30 shadow-lg">
+            @endif
+            <div class="min-w-0">
             <span class="inline-block text-[10px] font-bold tracking-widest uppercase
                          text-blue-300 bg-white/10 border border-white/15
                          px-3 py-1 rounded-full mb-3">
-                {{ $iglesia->denominacion }}
+                {{ $denom }}
             </span>
             <h2 class="text-white font-bold text-xl sm:text-2xl leading-tight truncate">
-                {{ $iglesia->nombre }}
+                {{ $nombre }}
             </h2>
-            @if($iglesia->direccion)
+            @if($iglesia->address ?? $iglesia->direccion)
                 <p class="text-blue-300 text-xs sm:text-sm mt-1.5 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
-                    {{ $iglesia->direccion }}
+                    {{ $iglesia->address ?? $iglesia->direccion }}
                 </p>
             @endif
 
-            {{-- Mini-stats en el hero --}}
             <div class="hero-pills">
-                @if($iglesia->promedio_asistentes)
+                @if($iglesia->approx_members ?? $iglesia->promedio_asistentes)
                     <span class="hero-pill">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
-                        ~{{ number_format($iglesia->promedio_asistentes) }} asistentes
+                        ~{{ number_format($iglesia->approx_members ?? $iglesia->promedio_asistentes) }} miembros
                     </span>
                 @endif
-
                 @if($iglesia->ayudas && $iglesia->ayudas->count())
-                    <span class="hero-pill">
-                        🤝 {{ $iglesia->ayudas->count() }} ayuda(s)
-                    </span>
+                    <span class="hero-pill">🤝 {{ $iglesia->ayudas->count() }} ayuda(s)</span>
                 @endif
-
-                @php
-                    $ent    = $iglesia->entidad_registrada_colombia ?? 'NO';
-                    $entCss = match($ent) { 'SI' => 'hero-pill--si', 'EN_PROCESO' => 'hero-pill--proceso', default => 'hero-pill--no' };
-                @endphp
-                <span class="hero-pill {{ $entCss }}">
-                    {{ $iglesia->entidad_label }}
-                </span>
+            </div>
             </div>
         </div>
 
         <div class="flex-shrink-0">
-            @if($iglesia->estado === 'activo')
+            @if($isActiva)
                 <div class="flex items-center gap-2 bg-green-500/20 border border-green-400/30 rounded-xl px-4 py-2.5">
                     <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse" aria-hidden="true"></span>
                     <span class="text-green-300 text-sm font-bold">Activa</span>
@@ -110,241 +114,423 @@
     </form>
 </div>
 
-{{-- ═══════════════════════════
-     CARDS DE INFORMACIÓN
-     1 col móvil · 2 col md+
-═══════════════════════════ --}}
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+{{-- ═══════════════════════════════════════════════════
+     TARJETAS DE INFORMACIÓN — 8 SECCIONES
+═══════════════════════════════════════════════════ --}}
 
-    {{-- ────────────────────────
-         Card 1 – Info General
-    ──────────────────────── --}}
-    <div class="info-card">
-        <div class="info-card-header">
-            <div class="info-card-icon bg-blue-50">
-                <svg class="w-4 h-4 text-[#1E3A8A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
-            </div>
-            <span class="info-card-title">Información General</span>
+{{-- ── 1. INFORMACIÓN DE LA IGLESIA ── --}}
+<div class="info-card mb-4">
+    <div class="info-card-header">
+        <div class="info-card-icon bg-blue-50">
+            <svg class="w-4 h-4 text-[#1E3A8A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
         </div>
-
-        <div class="data-row">
-            <span class="data-label">Nombre</span>
-            <span class="data-value font-semibold text-slate-800">{{ $iglesia->nombre }}</span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Denominación</span>
-            <span class="data-value">
-                <span class="inline-block bg-blue-50 text-[#1E3A8A] text-xs font-bold px-2.5 py-1 rounded-full border border-blue-100">
-                    {{ $iglesia->denominacion }}
-                </span>
-            </span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Estado</span>
-            <span class="data-value">
-                @if($iglesia->estado === 'activo')
-                    <span class="badge-activo">
-                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full" aria-hidden="true"></span>
-                        Activa
-                    </span>
-                @else
-                    <span class="badge-inactivo">
-                        <span class="w-1.5 h-1.5 bg-red-400 rounded-full" aria-hidden="true"></span>
-                        Inactiva
-                    </span>
-                @endif
-            </span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Dirección</span>
-            <span class="data-value">{{ $iglesia->direccion }}</span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Comuna</span>
-            <span class="data-value text-slate-{{ $iglesia->comuna ? '700' : '400' }}">
-                {{ $iglesia->comuna ?? 'No registrada' }}
-            </span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Corregimiento</span>
-            <span class="data-value text-slate-{{ $iglesia->corregimiento ? '700' : '400' }}">
-                {{ $iglesia->corregimiento ?? 'No registrado' }}
-            </span>
-        </div>
-
-        {{-- ── NUEVOS: datos institucionales ── --}}
-        <div class="data-row">
-            <span class="data-label">Cel. inst.</span>
-            <span class="data-value">
-                @if($iglesia->celular_institucional)
-                    <a href="tel:{{ $iglesia->celular_institucional }}" class="link-contact">
-                        📱 {{ $iglesia->celular_institucional }}
-                    </a>
-                @else
-                    <span class="text-slate-400">No registrado</span>
-                @endif
-            </span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Correo inst.</span>
-            <span class="data-value">
-                @if($iglesia->correo_institucional)
-                    <a href="mailto:{{ $iglesia->correo_institucional }}" class="link-contact break-all">
-                        ✉ {{ $iglesia->correo_institucional }}
-                    </a>
-                @else
-                    <span class="text-slate-400">No registrado</span>
-                @endif
-            </span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Reg. Colombia</span>
-            <span class="data-value">
-                @php
-                    $ent    = $iglesia->entidad_registrada_colombia ?? 'NO';
-                    $entCss = match($ent) { 'SI' => 'badge-ent--si', 'EN_PROCESO' => 'badge-ent--proceso', default => 'badge-ent--no' };
-                @endphp
-                <span class="badge-ent {{ $entCss }}">{{ $iglesia->entidad_label }}</span>
-            </span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Asistentes</span>
-            <span class="data-value">
-                @if($iglesia->promedio_asistentes)
-                    <span class="asist-chip">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        ~{{ number_format($iglesia->promedio_asistentes) }} por servicio
-                    </span>
-                @else
-                    <span class="text-slate-400">No registrado</span>
-                @endif
-            </span>
-        </div>
-
-        <div class="data-row">
-            <span class="data-label">Registrada</span>
-            <span class="data-value text-slate-500 text-xs">
-                {{ $iglesia->created_at->translatedFormat('d \d\e F \d\e Y') }}
-            </span>
-        </div>
+        <span class="info-card-title">Información de la Iglesia</span>
     </div>
-
-    {{-- ────────────────────────
-         Card 2 – Contacto
-    ──────────────────────── --}}
-    <div class="info-card">
-        <div class="info-card-header">
-            <div class="info-card-icon bg-amber-50">
-                <svg class="w-4 h-4 text-[#F59E0B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                </svg>
-            </div>
-            <span class="info-card-title">Contacto y Responsable</span>
-        </div>
-
-        <div class="data-row">
-            <span class="data-label">Pastor / Líder</span>
-            <span class="data-value {{ $iglesia->pastor_sacerdote ? 'font-semibold text-slate-800' : 'text-slate-400' }}">
-                {{ $iglesia->pastor_sacerdote ?? 'No registrado' }}
-            </span>
-        </div>
-
-        {{-- ── NUEVO: Fecha de nacimiento del líder ── --}}
-        <div class="data-row">
-            <span class="data-label">Nac. del líder</span>
-            <span class="data-value">
-                @if($iglesia->fecha_nacimiento_lider)
-                    <span class="nacimiento-wrap">
-                        <span class="nacimiento-fecha">
-                            🎂 {{ $iglesia->fecha_nacimiento_lider->translatedFormat('d \d\e F \d\e Y') }}
-                        </span>
-                        <span class="nacimiento-edad">{{ $iglesia->edad_lider }} años</span>
-                    </span>
-                @else
-                    <span class="text-slate-400">No registrada</span>
-                @endif
-            </span>
-        </div>
-
-        <div class="data-row">
-            <span class="data-label">Teléfono</span>
-            <span class="data-value">
-                @if($iglesia->telefono)
-                    <a href="tel:{{ $iglesia->telefono }}" class="link-contact">
-                        {{ $iglesia->telefono }}
-                    </a>
-                @else
-                    <span class="text-slate-400">No registrado</span>
-                @endif
-            </span>
-        </div>
-        <div class="data-row">
-            <span class="data-label">Email</span>
-            <span class="data-value">
-                @if($iglesia->email)
-                    <a href="mailto:{{ $iglesia->email }}" class="link-contact break-all">
-                        {{ $iglesia->email }}
-                    </a>
-                @else
-                    <span class="text-slate-400">No registrado</span>
-                @endif
-            </span>
-        </div>
-
-        {{-- Coordenadas GPS --}}
-        <div class="px-4 py-3 bg-slate-50 border-t border-slate-100">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                Coordenadas GPS
-            </p>
-            <div class="flex flex-wrap gap-2">
-                <span class="coords-chip">
-                    <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    </svg>
-                    Lat: {{ $iglesia->latitud }}
-                </span>
-                <span class="coords-chip">
-                    Lng: {{ $iglesia->longitud }}
-                </span>
-            </div>
-            <a href="https://maps.google.com/?q={{ $iglesia->latitud }},{{ $iglesia->longitud }}"
-               target="_blank" rel="noopener"
-               class="btn-maps mt-3 inline-flex">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                </svg>
-                Ver en Google Maps
-            </a>
-        </div>
+    <div class="data-row">
+        <span class="data-label">Nombre oficial</span>
+        <span class="data-value font-semibold text-slate-800">{{ $iglesia->official_name ?? $iglesia->nombre ?? '—' }}</span>
     </div>
-
+    <div class="data-row">
+        <span class="data-label">Denominación</span>
+        <span class="data-value">
+            @php $denomVal = $iglesia->denomination ?? $iglesia->denominacion ?? null; @endphp
+            @if($denomVal)
+                <span class="inline-block bg-blue-50 text-[#1E3A8A] text-xs font-bold px-2.5 py-1 rounded-full border border-blue-100">{{ $denomVal }}</span>
+            @else
+                <span class="text-slate-400">No registrada</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Carácter confesional</span>
+        <span class="data-value">{{ $iglesia->confessional_character ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Estado</span>
+        <span class="data-value">
+            @if($isActiva)
+                <span class="badge-activo"><span class="w-1.5 h-1.5 bg-green-500 rounded-full" aria-hidden="true"></span>Activa</span>
+            @elseif(($iglesia->church_status ?? '') === 'Suspended')
+                <span class="inline-flex items-center gap-1.5 bg-yellow-50 text-yellow-700 text-xs font-bold px-2.5 py-1 rounded-full border border-yellow-200">
+                    <span class="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>Suspendida
+                </span>
+            @else
+                <span class="badge-inactivo"><span class="w-1.5 h-1.5 bg-red-400 rounded-full" aria-hidden="true"></span>Inactiva</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Fecha de fundación</span>
+        <span class="data-value">
+            @if($iglesia->foundation_date)
+                {{ is_string($iglesia->foundation_date) ? $iglesia->foundation_date : $iglesia->foundation_date->translatedFormat('d \d\e F \d\e Y') }}
+            @else
+                <span class="text-slate-400">No registrada</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Ubicación específica</span>
+        <span class="data-value">{{ $iglesia->specific_location ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Miembros aprox.</span>
+        <span class="data-value">
+            @php $members = $iglesia->approx_members ?? $iglesia->promedio_asistentes ?? null; @endphp
+            @if($members)
+                <span class="asist-chip">~{{ number_format($members) }} personas</span>
+            @else
+                <span class="text-slate-400">No registrado</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Registrada</span>
+        <span class="data-value text-slate-500 text-xs">{{ $iglesia->created_at->translatedFormat('d \d\e F \d\e Y') }}</span>
+    </div>
 </div>
 
-{{-- ═══════════════════════════
-     DESCRIPCIÓN (si existe)
-═══════════════════════════ --}}
-@if($iglesia->descripcion)
+{{-- ── 2. UBICACIÓN ── --}}
+<div class="info-card mb-4">
+    <div class="info-card-header">
+        <div class="info-card-icon bg-emerald-50">
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+        </div>
+        <span class="info-card-title">Ubicación</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Dirección</span>
+        <span class="data-value">{{ $iglesia->address ?? $iglesia->direccion ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Barrio</span>
+        <span class="data-value">{{ $iglesia->neighborhood ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Comuna</span>
+        <span class="data-value">{{ $iglesia->comuna ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Ciudad</span>
+        <span class="data-value">{{ $iglesia->city ?? 'Neiva' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Departamento</span>
+        <span class="data-value">{{ $iglesia->department ?? 'Huila' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">País</span>
+        <span class="data-value">{{ $iglesia->country ?? 'Colombia' }}</span>
+    </div>
+    <div class="px-4 py-3 bg-slate-50 border-t border-slate-100">
+        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Coordenadas GPS</p>
+        <div class="flex flex-wrap gap-2">
+            <span class="coords-chip">
+                <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                </svg>
+                Lat: {{ $iglesia->latitud }}
+            </span>
+            <span class="coords-chip">Lng: {{ $iglesia->longitud }}</span>
+        </div>
+        <a href="https://maps.google.com/?q={{ $iglesia->latitud }},{{ $iglesia->longitud }}"
+           target="_blank" rel="noopener"
+           class="btn-maps mt-3 inline-flex">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+            </svg>
+            Ver en Google Maps
+        </a>
+    </div>
+</div>
+
+{{-- ── 3. CONTACTO ── --}}
+<div class="info-card mb-4">
+    <div class="info-card-header">
+        <div class="info-card-icon bg-sky-50">
+            <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+            </svg>
+        </div>
+        <span class="info-card-title">Contacto</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Teléfono fijo</span>
+        <span class="data-value">
+            @if($iglesia->phone_landline)
+                <a href="tel:{{ $iglesia->phone_landline }}" class="link-contact">{{ $iglesia->phone_landline }}</a>
+            @else
+                <span class="text-slate-400">No registrado</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Teléfono móvil</span>
+        <span class="data-value">
+            @if($iglesia->phone_mobile ?? $iglesia->celular_institucional)
+                <a href="tel:{{ $iglesia->phone_mobile ?? $iglesia->celular_institucional }}" class="link-contact">
+                    📱 {{ $iglesia->phone_mobile ?? $iglesia->celular_institucional }}
+                </a>
+            @else
+                <span class="text-slate-400">No registrado</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Correo</span>
+        <span class="data-value">
+            @if($iglesia->email ?? $iglesia->correo_institucional)
+                <a href="mailto:{{ $iglesia->email ?? $iglesia->correo_institucional }}" class="link-contact break-all">
+                    ✉ {{ $iglesia->email ?? $iglesia->correo_institucional }}
+                </a>
+            @else
+                <span class="text-slate-400">No registrado</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Web / Red social</span>
+        <span class="data-value">
+            @if($iglesia->website_or_social)
+                <a href="{{ Str::startsWith($iglesia->website_or_social, 'http') ? $iglesia->website_or_social : 'https://'.$iglesia->website_or_social }}"
+                   target="_blank" rel="noopener" class="link-contact break-all">
+                    🌐 {{ $iglesia->website_or_social }}
+                </a>
+            @else
+                <span class="text-slate-400">No registrado</span>
+            @endif
+        </span>
+    </div>
+</div>
+
+{{-- ── 4. PASTOR / LÍDER PRINCIPAL ── --}}
+<div class="info-card mb-4">
+    <div class="info-card-header">
+        <div class="info-card-icon bg-amber-50">
+            <svg class="w-4 h-4 text-[#F59E0B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+        </div>
+        <span class="info-card-title">Pastor o Líder Principal</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Nombre</span>
+        <span class="data-value font-semibold text-slate-800">
+            {{ $iglesia->pastor_full_name ?? $iglesia->pastor_sacerdote ?? '—' }}
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Documento</span>
+        <span class="data-value">
+            @if($iglesia->pastor_document_type && $iglesia->pastor_document_number)
+                {{ $iglesia->pastor_document_type }}: {{ $iglesia->pastor_document_number }}
+            @else
+                <span class="text-slate-400">No registrado</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Fecha de nac.</span>
+        <span class="data-value">
+            @php $pastorBirth = $iglesia->pastor_birth_date ?? $iglesia->fecha_nacimiento_lider ?? null; @endphp
+            @if($pastorBirth)
+                🎂 {{ is_string($pastorBirth) ? $pastorBirth : $pastorBirth->translatedFormat('d \d\e F \d\e Y') }}
+            @else
+                <span class="text-slate-400">No registrada</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Período liderazgo</span>
+        <span class="data-value">{{ $iglesia->leadership_period_type ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Teléfono</span>
+        <span class="data-value">
+            @if($iglesia->pastor_phone ?? $iglesia->telefono)
+                <a href="tel:{{ $iglesia->pastor_phone ?? $iglesia->telefono }}" class="link-contact">
+                    {{ $iglesia->pastor_phone ?? $iglesia->telefono }}
+                </a>
+            @else
+                <span class="text-slate-400">No registrado</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Email</span>
+        <span class="data-value">
+            @if($iglesia->pastor_email)
+                <a href="mailto:{{ $iglesia->pastor_email }}" class="link-contact break-all">{{ $iglesia->pastor_email }}</a>
+            @else
+                <span class="text-slate-400">No registrado</span>
+            @endif
+        </span>
+    </div>
+</div>
+
+{{-- ── 5. LÍDER DE MUJERES ── --}}
+@if($iglesia->women_leader_full_name)
+<div class="info-card mb-4">
+    <div class="info-card-header">
+        <div class="info-card-icon bg-pink-50">
+            <svg class="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+        </div>
+        <span class="info-card-title">Líder de Mujeres</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Nombre</span>
+        <span class="data-value font-semibold text-slate-800">{{ $iglesia->women_leader_full_name }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Teléfono</span>
+        <span class="data-value">
+            @if($iglesia->women_leader_phone)
+                <a href="tel:{{ $iglesia->women_leader_phone }}" class="link-contact">{{ $iglesia->women_leader_phone }}</a>
+            @else
+                <span class="text-slate-400">No registrado</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Email</span>
+        <span class="data-value">
+            @if($iglesia->women_leader_email)
+                <a href="mailto:{{ $iglesia->women_leader_email }}" class="link-contact break-all">{{ $iglesia->women_leader_email }}</a>
+            @else
+                <span class="text-slate-400">No registrado</span>
+            @endif
+        </span>
+    </div>
+</div>
+@endif
+
+{{-- ── 6. DATOS JURÍDICOS ── --}}
+@if($iglesia->legal_registration_type || $iglesia->legal_registration_number)
+<div class="info-card mb-4">
+    <div class="info-card-header">
+        <div class="info-card-icon bg-violet-50">
+            <svg class="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+        </div>
+        <span class="info-card-title">Datos Jurídicos / Institucionales</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Tipo de registro</span>
+        <span class="data-value">{{ $iglesia->legal_registration_type ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Número de registro</span>
+        <span class="data-value">{{ $iglesia->legal_registration_number ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Entidad que otorga</span>
+        <span class="data-value">{{ $iglesia->legal_entity_granting ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">N° Resolución</span>
+        <span class="data-value">{{ $iglesia->resolution_number ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Fecha resolución</span>
+        <span class="data-value">
+            @if($iglesia->resolution_date)
+                {{ is_string($iglesia->resolution_date) ? $iglesia->resolution_date : $iglesia->resolution_date->translatedFormat('d \d\e F \d\e Y') }}
+            @else
+                <span class="text-slate-400">No registrada</span>
+            @endif
+        </span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">N° Expediente</span>
+        <span class="data-value">{{ $iglesia->file_number ?? '—' }}</span>
+    </div>
+    <div class="data-row">
+        <span class="data-label">Tipo personería</span>
+        <span class="data-value">{{ $iglesia->legal_personality_type ?? '—' }}</span>
+    </div>
+    @if($iglesia->legal_notes)
+        <div class="px-4 py-3 bg-violet-50 border-t border-violet-100">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-violet-500 mb-1">Notas jurídicas</p>
+            <p class="text-sm text-violet-900 leading-relaxed">{{ $iglesia->legal_notes }}</p>
+        </div>
+    @endif
+</div>
+@endif
+
+{{-- ── 7. MINISTERIOS ── --}}
+@php
+    $ministeriosData = $iglesia->ministries ?? null;
+    if (is_string($ministeriosData)) $ministeriosData = json_decode($ministeriosData, true) ?? [];
+    $ministeriosLabels = [
+        'Children Ministry' => ['icon' => '👶', 'label' => 'Ministerio de Niños'],
+        'Worship'           => ['icon' => '🎵', 'label' => 'Alabanza y Adoración'],
+        'Family'            => ['icon' => '🏠', 'label' => 'Familia'],
+        'Couples'           => ['icon' => '💑', 'label' => 'Parejas'],
+        'Youth'             => ['icon' => '🌟', 'label' => 'Jóvenes'],
+        'Dance'             => ['icon' => '💃', 'label' => 'Danza'],
+        'Elderly'           => ['icon' => '🧓', 'label' => 'Adulto Mayor'],
+        'Women'             => ['icon' => '🌸', 'label' => 'Mujeres'],
+        'Intercession'      => ['icon' => '🙏', 'label' => 'Intercesión'],
+        'Prison Support'    => ['icon' => '🔗', 'label' => 'Apoyo Carcelario'],
+        'Missionaries'      => ['icon' => '🌍', 'label' => 'Misioneros'],
+        'Counseling'        => ['icon' => '💬', 'label' => 'Consejería'],
+    ];
+@endphp
+@if(!empty($ministeriosData))
+<div class="info-card mb-4">
+    <div class="info-card-header">
+        <div class="info-card-icon bg-indigo-50">
+            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+        </div>
+        <span class="info-card-title">Ministerios</span>
+        <span class="ml-auto text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full">
+            {{ count($ministeriosData) }} activo(s)
+        </span>
+    </div>
+    <div class="flex flex-wrap gap-2 p-4">
+        @foreach((array) $ministeriosData as $min)
+            @php $minData = $ministeriosLabels[$min] ?? ['icon' => '✝', 'label' => $min]; @endphp
+            <span class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200 text-xs font-semibold px-3 py-1.5 rounded-full">
+                <span>{{ $minData['icon'] }}</span>
+                <span>{{ $minData['label'] }}</span>
+            </span>
+        @endforeach
+    </div>
+</div>
+@endif
+
+{{-- ── 8. OBSERVACIONES ADICIONALES ── --}}
+@if($iglesia->additional_notes ?? $iglesia->descripcion)
     <div class="desc-card mb-4">
         <div class="flex items-center gap-2 mb-2">
             <svg class="w-4 h-4 text-[#F59E0B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-            <span class="text-xs font-bold text-amber-800 uppercase tracking-wider">Descripción</span>
+            <span class="text-xs font-bold text-amber-800 uppercase tracking-wider">Observaciones Adicionales</span>
         </div>
-        <p class="text-sm text-amber-900 leading-relaxed">{{ $iglesia->descripcion }}</p>
+        <p class="text-sm text-amber-900 leading-relaxed">{{ $iglesia->additional_notes ?? $iglesia->descripcion }}</p>
     </div>
 @endif
-
 {{-- ═══════════════════════════
      AYUDAS SOCIALES
 ═══════════════════════════ --}}
@@ -399,9 +585,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     const lat    = {{ $iglesia->latitud }};
     const lng    = {{ $iglesia->longitud }};
-    const name   = @json($iglesia->nombre);
-    const addr   = @json($iglesia->direccion);
-    const denom  = @json($iglesia->denominacion);
+    const name   = @json($iglesia->official_name ?? $iglesia->nombre);
+    const addr   = @json($iglesia->address ?? $iglesia->direccion);
+    const denom  = @json($iglesia->denomination ?? $iglesia->denominacion);
     const ayudas = @json($iglesia->ayudas->map(fn($a) => ['icono' => $a->icono ?? '🤝', 'nombre' => $a->nombre]));
 
     const map = L.map('show-map', { zoomControl: true }).setView([lat, lng], 16);

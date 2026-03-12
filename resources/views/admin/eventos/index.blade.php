@@ -75,7 +75,7 @@
                 @forelse($eventos as $evento)
                     <tr class="evento-row-data"
                         data-titulo="{{ strtolower($evento->titulo) }}"
-                        data-iglesia="{{ strtolower($evento->iglesia->nombre ?? '') }}"
+                        data-iglesia="{{ strtolower($evento->iglesia->official_name ?? '') }}"
                         data-tipo="{{ strtolower($evento->tipo_evento ?? '') }}">
 
                         {{-- Título + dirección --}}
@@ -95,7 +95,7 @@
                             </div>
                         </td>
 
-                        <td>{{ $evento->iglesia->nombre ?? '—' }}</td>
+                        <td>{{ $evento->iglesia->official_name ?? '—' }}</td>
                         <td>
                             @if($evento->fecha_inicio instanceof \DateTimeInterface)
                                 {{ $evento->fecha_inicio->format('d/m/Y H:i') }}
@@ -186,7 +186,7 @@
         @forelse($eventos as $evento)
             <div class="iglesia-card card-filtrable"
                  data-titulo="{{ strtolower($evento->titulo) }}"
-                 data-iglesia="{{ strtolower($evento->iglesia->nombre ?? '') }}"
+                 data-iglesia="{{ strtolower($evento->iglesia->official_name ?? '') }}"
                  data-tipo="{{ strtolower($evento->tipo_evento ?? '') }}">
 
                 {{-- Header --}}
@@ -214,7 +214,7 @@
                 <div class="grid grid-cols-1 gap-1.5 mb-3 text-xs text-slate-500">
                     <div class="flex items-start gap-2">
                         <span class="text-slate-300 flex-shrink-0 mt-0.5">⛪</span>
-                        <span class="truncate">{{ $evento->iglesia->nombre ?? 'Sin iglesia' }}</span>
+                        <span class="truncate">{{ $evento->iglesia->official_name ?? 'Sin iglesia' }}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-slate-300 flex-shrink-0">📅</span>

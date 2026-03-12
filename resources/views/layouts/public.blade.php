@@ -14,6 +14,9 @@
 
     {{-- Leaflet CSS --}}
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    {{-- MarkerCluster CSS --}}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
     {{-- Favicon --}}
 <link rel="icon" type="image/png" href="{{ asset('images/logo-sirn.png') }}">
@@ -105,6 +108,7 @@
 
 {{-- Scripts de Leaflet y páginas --}}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 @stack('scripts')
 
 </body>

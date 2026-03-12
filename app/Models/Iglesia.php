@@ -13,31 +13,70 @@ class Iglesia extends Model
     protected $table = 'iglesias';
 
     protected $fillable = [
-         // ── Información básica ────────────────────────────────
-        'nombre',
-        'denominacion',
-        'direccion',
-        'comuna',
-        'corregimiento',
-        'estado',
-        'celular_institucional',
-        'correo_institucional',
-        'entidad_registrada_colombia',
-        'promedio_asistentes',
-        'pastor_sacerdote',
-        'fecha_nacimiento_lider',       // ← nuevo
-        'telefono',
-        'email',
-        'descripcion',
+        // ── Campos heredados (compatibilidad) ──────────────────────────────
+        'nombre', 'denominacion', 'direccion', 'comuna', 'corregimiento',
+        'estado', 'celular_institucional', 'correo_institucional',
+        'entidad_registrada_colombia', 'promedio_asistentes',
+        'pastor_sacerdote', 'fecha_nacimiento_lider', 'telefono',
+        'email', 'descripcion',
+        // ── Sección 1: Información de la Iglesia ──────────────────────
+        'official_name',
+        'denomination',
+        'confessional_character',
+        'church_status',
+        'specific_location',
+        'foundation_date',
+        'approx_members',
+        // ── Sección 2: Ubicación ─────────────────────────────────────
+        'address',
+        'neighborhood',        'municipality',        'city',
+        'department',
+        'country',
+        // ── Sección 3: Contacto ─────────────────────────────────────
+        'phone_landline',
+        'phone_mobile',
+        'website_or_social',
+        // ── Sección 4: Pastor principal ────────────────────────────
+        'pastor_full_name',
+        'pastor_document_type',
+        'pastor_document_number',
+        'pastor_birth_date',
+        'leadership_period_type',
+        'pastor_phone',
+        'pastor_email',
+        // ── Sección 5: Líder de mujeres ────────────────────────────
+        'women_leader_full_name',
+        'women_leader_phone',
+        'women_leader_email',
+        // ── Sección 6: Datos jurídicos ────────────────────────────
+        'legal_registration_type',
+        'legal_registration_number',
+        'legal_entity_granting',
+        'resolution_number',
+        'resolution_date',
+        'file_number',
+        'legal_personality_type',
+        'legal_notes',
+        // ── Sección 7 y 8 ─────────────────────────────────────────
+        'ministries',
+        'additional_notes',
+        // ── Mapa ────────────────────────────────────────────────
         'latitud',
         'longitud',
+        // ── Foto ─────────────────────────────────────────────────
+        'photo',
     ];
 
     protected $casts = [
         'latitud'                => 'float',
         'longitud'               => 'float',
         'promedio_asistentes'    => 'integer',
-        'fecha_nacimiento_lider' => 'date',     // Carbon automático
+        'approx_members'         => 'integer',
+        'fecha_nacimiento_lider' => 'date',
+        'foundation_date'        => 'date',
+        'pastor_birth_date'      => 'date',
+        'resolution_date'        => 'date',
+        'ministries'             => 'array',
     ];
 
        public const ENTIDAD_OPCIONES = [

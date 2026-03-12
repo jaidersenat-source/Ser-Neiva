@@ -27,7 +27,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z"/>
                     </svg>
-                    {{ $evento->iglesia->nombre }}
+                    {{ $evento->iglesia->official_name }}
                 </p>
             @endif
         </div>
@@ -101,7 +101,7 @@
         </div>
         <div class="data-row">
             <span class="data-label">Iglesia</span>
-            <span class="data-value">{{ $evento->iglesia->nombre ?? '—' }}</span>
+            <span class="data-value">{{ $evento->iglesia->official_name ?? '—' }}</span>
         </div>
         <div class="data-row">
             <span class="data-label">Tipo</span>
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const lng  = {{ $evento->longitud ?? -75.2819 }};
     const title = @json($evento->titulo);
     const addr  = @json($evento->direccion_evento ?? 'Sin dirección registrada');
-    const iglesia = @json($evento->iglesia->nombre ?? '');
+    const iglesia = @json($evento->iglesia->official_name ?? '');
 
     const map = L.map('show-map', { zoomControl: true }).setView([lat, lng], 15);
 

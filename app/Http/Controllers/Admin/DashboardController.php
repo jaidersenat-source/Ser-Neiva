@@ -14,33 +14,33 @@ class DashboardController extends Controller
         // ── Stats generales ──────────────────────────────────
         $stats = [
             'total'          => Iglesia::count(),
-            'activas'        => Iglesia::where('estado', 'activo')->count(),
-            'inactivas'      => Iglesia::where('estado', 'inactivo')->count(),
-            'denominaciones' => Iglesia::distinct('denominacion')->count('denominacion'),
+            'activas'        => Iglesia::where('church_status', 'Active')->count(),
+            'inactivas'      => Iglesia::where('church_status', 'Inactive')->count(),
+            'denominaciones' => Iglesia::distinct('denomination')->count('denomination'),
 
             // Asistentes
-            'total_asistentes' => (int) Iglesia::where('estado', 'activo')
-                                        ->whereNotNull('promedio_asistentes')
-                                        ->sum('promedio_asistentes'),
-            'promedio_global'  => (int) Iglesia::where('estado', 'activo')
-                                        ->whereNotNull('promedio_asistentes')
-                                        ->avg('promedio_asistentes'),
-            'con_asistentes'   => Iglesia::whereNotNull('promedio_asistentes')->count(),
+            'total_asistentes' => (int) Iglesia::where('church_status', 'Active')
+                                        ->whereNotNull('approx_members')
+                                        ->sum('approx_members'),
+            'promedio_global'  => (int) Iglesia::where('church_status', 'Active')
+                                        ->whereNotNull('approx_members')
+                                        ->avg('approx_members'),
+            'con_asistentes'   => Iglesia::whereNotNull('approx_members')->count(),
         ];
 
         // ── Clasificación por tamaño de congregación ─────────
         $tamanos = [
-            'pequeña'  => Iglesia::where('estado', 'activo')->whereBetween('promedio_asistentes', [1, 49])->count(),
-            'mediana'  => Iglesia::where('estado', 'activo')->whereBetween('promedio_asistentes', [50, 200])->count(),
-            'grande'   => Iglesia::where('estado', 'activo')->where('promedio_asistentes', '>', 200)->count(),
-            'sin_dato' => Iglesia::where('estado', 'activo')->whereNull('promedio_asistentes')->count(),
+            'pequeña'  => Iglesia::where('church_status', 'Active')->whereBetween('approx_members', [1, 49])->count(),
+            'mediana'  => Iglesia::where('church_status', 'Active')->whereBetween('approx_members', [50, 200])->count(),
+            'grande'   => Iglesia::where('church_status', 'Active')->where('approx_members', '>', 200)->count(),
+            'sin_dato' => Iglesia::where('church_status', 'Active')->whereNull('approx_members')->count(),
         ];
 
         // ── Top 5 iglesias por asistentes ────────────────────
-        $topIglesias = Iglesia::select('id', 'nombre', 'denominacion', 'promedio_asistentes')
-            ->where('estado', 'activo')
-            ->whereNotNull('promedio_asistentes')
-            ->orderByDesc('promedio_asistentes')
+        $topIglesias = Iglesia::select('id', 'official_name', 'denomination', 'approx_members')
+            ->where('church_status', 'Active')
+            ->whereNotNull('approx_members')
+            ->orderByDesc('approx_members')
             ->take(5)
             ->get();
 
@@ -51,9 +51,9 @@ class DashboardController extends Controller
             ->get();
 
         // ── Por denominación ──────────────────────────────────
-        $porDenominacion = Iglesia::select('denominacion', DB::raw('count(*) as total'))
-            ->where('estado', 'activo')
-            ->groupBy('denominacion')
+        $porDenominacion = Iglesia::select('denomination', DB::raw('count(*) as total'))
+            ->where('church_status', 'Active')
+            ->groupBy('denomination')
             ->orderByDesc('total')
             ->take(6)
             ->get();
@@ -62,12 +62,12 @@ class DashboardController extends Controller
         // Trae todos los que tienen fecha, calcula cuándo cae este año/siguiente
         $hoy = now();
 
-        $cumpleanosRaw = Iglesia::whereNotNull('fecha_nacimiento_lider')
-            ->whereNotNull('pastor_sacerdote')
-            ->select('id', 'nombre', 'pastor_sacerdote', 'fecha_nacimiento_lider')
+        $cumpleanosRaw = Iglesia::whereNotNull('pastor_birth_date')
+            ->whereNotNull('pastor_full_name')
+            ->select('id', 'official_name', 'pastor_full_name', 'pastor_birth_date')
             ->get()
             ->map(function ($ig) use ($hoy) {
-                $nac    = $ig->fecha_nacimiento_lider;
+                $nac    = $ig->pastor_birth_date;
                 $cumple = $nac->copy()->year($hoy->year);
                 if ($cumple->lt($hoy->copy()->startOfDay())) {
                     $cumple->addYear();
@@ -75,8 +75,8 @@ class DashboardController extends Controller
                 return [
                     'tipo'    => 'cumpleaños',
                     'fecha'   => $cumple->format('Y-m-d'),
-                    'label'   => $ig->pastor_sacerdote,
-                    'iglesia' => $ig->nombre,
+                    'label'   => $ig->pastor_full_name,
+                    'iglesia' => $ig->official_name,
                     'edad'    => $nac->age + ($cumple->year > $hoy->year ? 1 : 0),
                     'color'   => '#F59E0B',
                 ];
@@ -104,7 +104,7 @@ class DashboardController extends Controller
         }
 
         // Unir eventos y cumpleaños → JSON para el JS del mini-calendario
-        $calendarData = $eventosRaw->merge($cumpleanosRaw)->values();
+        $calendarData = collect($eventosRaw)->merge(collect($cumpleanosRaw))->values();
 
         // Próximos 5 eventos/cumpleaños desde hoy
         $proximosEventos = $calendarData

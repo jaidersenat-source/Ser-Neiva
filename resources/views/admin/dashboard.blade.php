@@ -124,7 +124,7 @@
     {{-- Panel centro: tamaños --}}
     <div class="asist-section">
         <p class="asist-section-title">Tamaño de congregaciones</p>
-        @php $tot = max($tamanos['pequeña']+$tamanos['mediana']+$tamanos['grande'], 1); @endphp
+        @php $tot = max($tamanos['pequeña']+$tamanos['mediana']+$tamanos['grande'], 1); $maxA = $topIglesias->max('approx_members') ?: 1; @endphp
 
         <div class="sz-row">
             <div class="sz-meta">
@@ -168,16 +168,15 @@
     @if($topIglesias->count())
     <div class="asist-section asist-section--border">
         <p class="asist-section-title">Top por asistentes</p>
-        @php $maxA = $topIglesias->max('promedio_asistentes') ?: 1; @endphp
         @foreach($topIglesias as $ig)
             <a href="{{ route('admin.iglesias.show', $ig) }}" class="top-row">
                 <div class="top-meta">
                     <span class="top-rank">#{{ $loop->iteration }}</span>
-                    <span class="top-name">{{ Str::limit($ig->nombre, 22) }}</span>
-                    <span class="top-num">{{ number_format($ig->promedio_asistentes) }}</span>
+                    <span class="top-name">{{ Str::limit($ig->official_name, 22) }}</span>
+                    <span class="top-num">{{ number_format($ig->approx_members) }}</span>
                 </div>
                 <div class="sz-track">
-                    <div class="sz-bar" style="width:{{ round($ig->promedio_asistentes/$maxA*100) }}%;background:linear-gradient(90deg,#93C5FD,#1E3A8A);transition:width .8s cubic-bezier(.4,0,.2,1);"></div>
+                    <div class="sz-bar" style="width:{{ round($ig->approx_members/$maxA*100) }}%;background:linear-gradient(90deg,#93C5FD,#1E3A8A);transition:width .8s cubic-bezier(.4,0,.2,1);"></div>
                 </div>
             </a>
         @endforeach
@@ -202,17 +201,17 @@
 
         @forelse($recientes as $ig)
             <a href="{{ route('admin.iglesias.show', $ig) }}" class="ig-row group">
-                <div class="ig-avatar">{{ substr($ig->nombre, 0, 1) }}</div>
+                <div class="ig-avatar">{{ substr($ig->official_name ?? '?', 0, 1) }}</div>
                 <div class="flex-1 min-w-0">
-                    <p class="ig-name group-hover:text-[#1E3A8A] transition-colors">{{ $ig->nombre }}</p>
-                    <p class="ig-denom">{{ $ig->denominacion }}</p>
+                    <p class="ig-name group-hover:text-[#1E3A8A] transition-colors">{{ $ig->official_name }}</p>
+                    <p class="ig-denom">{{ $ig->denomination }}</p>
                 </div>
                 <div class="flex items-center gap-2 flex-shrink-0">
-                    @if($ig->promedio_asistentes)
-                        <span class="chip-asist">~{{ number_format($ig->promedio_asistentes) }}</span>
+                    @if($ig->approx_members)
+                        <span class="chip-asist">~{{ number_format($ig->approx_members) }}</span>
                     @endif
-                    <span class="{{ $ig->estado === 'activo' ? 'badge-on' : 'badge-off' }}">
-                        {{ $ig->estado === 'activo' ? 'Activa' : 'Inactiva' }}
+                    <span class="{{ $ig->church_status === 'Active' ? 'badge-on' : 'badge-off' }}">
+                        {{ $ig->church_status === 'Active' ? 'Activa' : ($ig->church_status === 'Suspended' ? 'Suspendida' : 'Inactiva') }}
                     </span>
                 </div>
             </a>
@@ -248,12 +247,13 @@
                     $pct   = $stats['activas'] > 0 ? round($item->total / $stats['activas'] * 100) : 0;
                     $clrs  = ['#1E3A8A','#16A34A','#7C3AED','#DC2626','#D97706','#0891B2'];
                     $color = $clrs[$loop->index % count($clrs)];
+                    $denomLabels = ['Catholic'=>'Católica','Evangelical'=>'Evangélica','Pentecostal'=>'Pentecostal','Baptist'=>'Bautista','Other'=>'Otra'];
                 @endphp
                 <div class="denom-row">
                     <div class="denom-info">
                         <div class="flex items-center gap-2 min-w-0 flex-1">
                             <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:{{ $color }};"></span>
-                            <span class="denom-name">{{ $item->denominacion }}</span>
+                            <span class="denom-name">{{ $denomLabels[$item->denomination] ?? $item->denomination }}</span>
                         </div>
                         <span class="denom-num">{{ $item->total }}</span>
                         <span class="denom-pct">{{ $pct }}%</span>

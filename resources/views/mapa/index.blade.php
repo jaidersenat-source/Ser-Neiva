@@ -34,6 +34,19 @@
 
   <div class="mode-sep"></div>
 
+  {{-- Escenarios Deportivos --}}
+  <button class="mode-btn escenarios" id="btn-mode-escenarios"
+          onclick="setMode('escenarios')" aria-pressed="false">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+      <circle cx="12" cy="12" r="9" stroke-linecap="round"/>
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 3c2.4 2.4 3 5.6 3 9s-.6 6.6-3 9M12 3c-2.4 2.4-3 5.6-3 9s.6 6.6 3 9M3 12h18"/>
+    </svg>
+    Escenarios
+  </button>
+
+  <div class="mode-sep"></div>
+
   {{-- Spinner + contador --}}
   <div id="mode-spinner"></div>
   <span id="mode-counter">–</span>
@@ -80,7 +93,7 @@
         <div class="panel-header">
             <div>
                 <div class="panel-header-title" id="panel-title">Directorio Religioso</div>
-                <div class="panel-header-sub">Neiva, Huila – Colombia</div>
+                <div class="panel-header-sub">Huila – Colombia</div>
             </div>
             <button class="panel-close-btn" onclick="cerrarDrawer()" aria-label="Cerrar">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,7 +210,16 @@ const API_BASE     = "{{ url('/api') }}";
 const NEIVA_CENTER = [2.9274, -75.2819];
 const isMobile     = () => window.innerWidth < 768;
 
-// ── Colores por denominación ────────────────────────────────────
+// ── Colores por municipio y denominación ──────────────────────────────────────
+// Azul para Neiva, verde para otros municipios de Huila
+const COLOR_NEIVA    = '#1E3A8A';
+const COLOR_HUILA    = '#16A34A';
+
+function colorPorMunicipio(municipality) {
+    if (!municipality || municipality === 'Neiva') return COLOR_NEIVA;
+    return COLOR_HUILA;
+}
+
 // Colores fijos para denominaciones conocidas
 const COLORES_DENOM_FIJOS = {
     'Católica':             '#1E3A8A',
@@ -208,7 +230,8 @@ const COLORES_DENOM_FIJOS = {
     'Luterana':             '#0891B2',
     'Presbiteriana':        '#BE185D',
 };
-const COLOR_EVENTO = '#F59E0B';
+const COLOR_EVENTO     = '#F59E0B';
+const COLOR_ESCENARIO  = '#EA580C';
 
 // Utilidad para obtener/guardar colores únicos para nuevas denominaciones
 function getDenomColors() {
@@ -249,8 +272,8 @@ function colorDenom(denom) {
 const map = L.map('map', {
     center: NEIVA_CENTER,
     zoom: isMobile() ? 12 : 13,
-    minZoom: 10, maxZoom: 18,
-    maxBounds: [[2.65, -75.55], [3.20, -75.00]],
+    minZoom: 8, maxZoom: 18,
+    maxBounds: [[1.40, -76.80], [3.50, -74.30]],  // Todo el departamento de Huila
     maxBoundsViscosity: 0.8,
     zoomControl: false,
 });
@@ -266,8 +289,13 @@ function recentrarMapa() {
     map.flyTo(NEIVA_CENTER, isMobile() ? 12 : 13, { duration: 1.2 });
 }
 
-// ── LayerGroup único — clearMarkers() lo limpia ───────────────
-const markersLayer = L.layerGroup().addTo(map);
+// ── MarkerClusterGroup — agrupa marcadores al alejar zoom ──────
+const markersLayer = L.markerClusterGroup({
+    showCoverageOnHover: false,
+    spiderfyOnMaxZoom:   true,
+    maxClusterRadius:    60,
+    animate:             true,
+}).addTo(map);
 
 function clearMarkers() {
     markersLayer.clearLayers();
@@ -276,8 +304,8 @@ function clearMarkers() {
 // ════════════════════════════════════════════════════════════════
 //  ICONOS
 // ════════════════════════════════════════════════════════════════
-function crearIconoIglesia(denominacion) {
-    const color = colorDenom(denominacion);
+function crearIconoIglesia(denominacion, municipality) {
+    const color = municipality ? colorPorMunicipio(municipality) : colorDenom(denominacion);
     const s = isMobile() ? 28 : 32;
     return L.divIcon({
         className: '',
@@ -305,10 +333,24 @@ function crearIconoEvento() {
     });
 }
 
+function crearIconoEscenario() {
+    const s = isMobile() ? 30 : 34;
+    return L.divIcon({
+        className: '',
+        html: `<div style="width:${s}px;height:${s}px;background:${COLOR_ESCENARIO};
+                    border-radius:50%;border:2.5px solid white;
+                    box-shadow:0 3px 12px rgba(234,88,12,.45);
+                    display:flex;align-items:center;justify-content:center;font-size:${isMobile()?13:15}px;">
+                    ⚽
+               </div>`,
+        iconSize: [s,s], iconAnchor: [s/2,s/2], popupAnchor: [0,-(s/2+6)],
+    });
+}
+
 // ════════════════════════════════════════════════════════════════
 //  ESTADO GLOBAL
 // ════════════════════════════════════════════════════════════════
-let modoActual      = 'iglesias';   // 'iglesias' | 'eventos'
+let modoActual      = 'iglesias';   // 'iglesias' | 'eventos' | 'escenarios'
 let todosLosItems   = [];           // datos cargados del API activo
 let filtroActual    = '';           // denominación (solo iglesias)
 let busquedaActual  = '';
@@ -335,6 +377,8 @@ function setMode(modo) {
             .classList.toggle('active', modo === 'iglesias');
     document.getElementById('btn-mode-eventos')
             .classList.toggle('active', modo === 'eventos');
+    document.getElementById('btn-mode-escenarios')
+            .classList.toggle('active', modo === 'escenarios');
 
     // Mostrar/ocultar filtros de denominación
     const filtrosSection = document.getElementById('filtros-section');
@@ -342,10 +386,14 @@ function setMode(modo) {
 
     // Título del panel
     document.getElementById('panel-title').textContent =
-        modo === 'iglesias' ? 'Directorio Religioso' : 'Eventos';
+        modo === 'iglesias' ? 'Directorio Religioso'
+        : modo === 'eventos' ? 'Eventos'
+        : 'Escenarios Deportivos';
 
     // Placeholder buscador
-    const ph = modo === 'iglesias' ? 'Buscar iglesia...' : 'Buscar evento...';
+    const ph = modo === 'iglesias' ? 'Buscar iglesia...'
+             : modo === 'eventos'  ? 'Buscar evento...'
+             : 'Buscar escenario...';
     ['buscador','buscador-mobile'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.placeholder = ph;
@@ -358,11 +406,15 @@ function setMode(modo) {
 
     // Spinner badge color
     const spinner = document.getElementById('mode-spinner');
-    spinner.className = modo === 'eventos' ? 'eventos-spin visible' : 'visible';
+    spinner.className = modo === 'eventos'    ? 'eventos-spin visible'
+                      : modo === 'escenarios' ? 'escenarios-spin visible'
+                      : 'visible';
 
     // Cargar datos del modo
     if (modo === 'iglesias') {
         loadIglesias();
+    } else if (modo === 'escenarios') {
+        loadEscenarios();
     } else {
         loadEventos();
     }
@@ -433,6 +485,30 @@ async function loadEventos() {
 }
 
 // ════════════════════════════════════════════════════════════════
+//  API: loadEscenarios()
+// ════════════════════════════════════════════════════════════════
+async function loadEscenarios() {
+    mostrarLoading();
+    try {
+        const res = await fetch(`${API_BASE}/escenarios`, { headers: { 'Accept': 'application/json' } });
+        const ct  = res.headers.get('content-type') || '';
+        if (!res.ok || !ct.includes('application/json')) throw new Error(`HTTP ${res.status}`);
+
+        const json = await res.json();
+        if (!json.success) throw new Error('API respondió con error');
+
+        todosLosItems = json.data;
+        aplicarFiltros();
+
+    } catch (e) {
+        console.error('[loadEscenarios]', e);
+        mostrarError(e.message);
+    } finally {
+        document.getElementById('mode-spinner').classList.remove('visible');
+    }
+}
+
+// ════════════════════════════════════════════════════════════════
 //  FILTROS + BÚSQUEDA
 // ════════════════════════════════════════════════════════════════
 function aplicarFiltros() {
@@ -446,7 +522,14 @@ function aplicarFiltros() {
                 ig.nombre.toLowerCase().includes(q) ||
                 (ig.denominacion||'').toLowerCase().includes(q) ||
                 (ig.direccion||'').toLowerCase().includes(q) ||
-                (ig.pastor_sacerdote||'').toLowerCase().includes(q)
+                (ig.pastor_sacerdote||'').toLowerCase().includes(q) ||
+                (ig.municipality||'').toLowerCase().includes(q)
+            );
+        } else if (modoActual === 'escenarios') {
+            items = items.filter(es =>
+                es.name.toLowerCase().includes(q) ||
+                (es.address||'').toLowerCase().includes(q) ||
+                (es.contact||'').toLowerCase().includes(q)
             );
         } else {
             items = items.filter(ev =>
@@ -470,6 +553,9 @@ function aplicarFiltros() {
     if (modoActual === 'iglesias') {
         renderizarMarcadoresIglesias(items);
         renderizarListaIglesias(items);
+    } else if (modoActual === 'escenarios') {
+        renderizarMarcadoresEscenarios(items);
+        renderizarListaEscenarios(items);
     } else {
         renderizarMarcadoresEventos(items);
         renderizarListaEventos(items);
@@ -526,20 +612,22 @@ function ocultarClearBtns() {
 function renderizarMarcadoresIglesias(iglesias) {
     iglesias.forEach(ig => {
         if (!ig.latitud || !ig.longitud) return;
-        const m = L.marker([ig.latitud, ig.longitud], { icon: crearIconoIglesia(ig.denominacion) });
+        const m = L.marker([ig.latitud, ig.longitud], { icon: crearIconoIglesia(ig.denominacion, ig.municipality) });
         if (isMobile()) {
             m.on('click', () => mostrarPopupMovilIglesia(ig));
         } else {
             m.bindPopup(popupIglesia(ig), { maxWidth: 290, className: 'sirn-popup' });
         }
         m._itemData = ig;
-        m.addTo(markersLayer);
+        markersLayer.addLayer(m);
     });
 }
 
 function popupIglesia(ig) {
-    const color = colorDenom(ig.denominacion);
+    const color = ig.municipality ? colorPorMunicipio(ig.municipality) : colorDenom(ig.denominacion);
+    const ubicacion = [ig.municipality, ig.department || 'Huila'].filter(Boolean).join(', ');
     return `<div style="font-family:'DM Sans',system-ui,sans-serif;padding:2px 0;min-width:220px;">
+        ${ig.foto_url ? `<img src="${ig.foto_url}" alt="${ig.nombre}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;margin-bottom:10px;">` : ''}
         <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
             <div style="width:38px;height:38px;flex-shrink:0;background:${color};
                 border-radius:10px;display:flex;align-items:center;justify-content:center;
@@ -548,6 +636,8 @@ function popupIglesia(ig) {
                 <h3 style="font-weight:700;color:#1E293B;margin:0;font-size:14px;line-height:1.3;">${ig.nombre}</h3>
                 <span style="display:inline-block;background:#EFF6FF;color:${color};font-size:10px;
                     padding:2px 8px;border-radius:20px;font-weight:700;margin-top:4px;">${ig.denominacion||''}</span>
+                ${ubicacion ? `<span style="display:inline-block;background:#F0FDF4;color:#16A34A;font-size:10px;
+                    padding:2px 8px;border-radius:20px;font-weight:600;margin-top:4px;margin-left:4px;">📍 ${ubicacion}</span>` : ''}
             </div>
         </div>
         <div style="font-size:12px;color:#475569;line-height:1.9;border-top:1px solid #f1f5f9;padding-top:8px;display:flex;flex-direction:column;gap:3px;">
@@ -574,7 +664,7 @@ function renderizarMarcadoresEventos(eventos) {
             m.bindPopup(popupEvento(ev), { maxWidth: 290, className: 'sirn-popup' });
         }
         m._itemData = ev;
-        m.addTo(markersLayer);
+        markersLayer.addLayer(m);
     });
 }
 
@@ -611,14 +701,79 @@ function popupEvento(ev) {
 function renderizarListaIglesias(iglesias) {
     const c = document.getElementById('items-list');
     if (!iglesias.length) { c.innerHTML = emptyState('iglesias'); return; }
-    c.innerHTML = iglesias.map(ig => `
+    c.innerHTML = iglesias.map(ig => {
+        const color = ig.municipality ? colorPorMunicipio(ig.municipality) : colorDenom(ig.denominacion);
+        return `
         <div class="iglesia-item" onclick="irAlElemento(${ig.latitud},${ig.longitud},'iglesia',${ig.id})">
-            <div class="iglesia-avatar" style="background:${colorDenom(ig.denominacion)};">✝</div>
+            <div class="iglesia-avatar" style="background:${color};">✝</div>
             <div class="iglesia-info">
                 <div class="iglesia-nombre">${ig.nombre}</div>
-                <div class="iglesia-denom" style="color:${colorDenom(ig.denominacion)};">${ig.denominacion||''}</div>
+                <div class="iglesia-denom" style="color:${color};">${ig.denominacion||''}</div>
+                ${ig.municipality ? `<div class="iglesia-dir">🏷️ ${ig.municipality}${ig.department ? ', '+ig.department : ''}</div>` : ''}
                 <div class="iglesia-dir">📍 ${ig.direccion||''}</div>
                 ${ig.pastor_sacerdote ? `<div class="iglesia-pastor">👤 ${ig.pastor_sacerdote}</div>` : ''}
+            </div>
+            <svg class="iglesia-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </div>`;
+    }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER MARCADORES — ESCENARIOS DEPORTIVOS
+// ════════════════════════════════════════════════════════════════
+function renderizarMarcadoresEscenarios(escenarios) {
+    escenarios.forEach(es => {
+        if (!es.latitude || !es.longitude) return;
+        const m = L.marker([es.latitude, es.longitude], { icon: crearIconoEscenario() });
+        if (isMobile()) {
+            m.on('click', () => mostrarPopupMovilEscenario(es));
+        } else {
+            m.bindPopup(popupEscenario(es), { maxWidth: 290, className: 'sirn-popup' });
+        }
+        m._itemData = es;
+        markersLayer.addLayer(m);
+    });
+}
+
+function popupEscenario(es) {
+    const disponible = es.available_for_churches ? 'Sí' : 'No';
+    return `<div style="font-family:'DM Sans',system-ui,sans-serif;padding:2px 0;min-width:220px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+            <div style="width:38px;height:38px;flex-shrink:0;background:${COLOR_ESCENARIO};
+                border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;
+                box-shadow:0 3px 8px rgba(234,88,12,.4);">⚽</div>
+            <div>
+                <h3 style="font-weight:700;color:#1E293B;margin:0;font-size:14px;line-height:1.3;">${es.name}</h3>
+                <span style="display:inline-block;background:#FFF7ED;color:#C2410C;font-size:10px;
+                    padding:2px 8px;border-radius:20px;font-weight:700;margin-top:4px;">Escenario Deportivo</span>
+            </div>
+        </div>
+        <div style="font-size:12px;color:#475569;line-height:1.9;border-top:1px solid #f1f5f9;padding-top:8px;display:flex;flex-direction:column;gap:3px;">
+            <div>📍 ${es.address}</div>
+            ${es.contact ? `<div>📞 <a href="tel:${es.contact}" style="color:${COLOR_ESCENARIO};font-weight:600;">${es.contact}</a></div>` : ''}
+            <div>⛪ Disponible para iglesias: <b>${disponible}</b></div>
+        </div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER LISTA — ESCENARIOS DEPORTIVOS
+// ════════════════════════════════════════════════════════════════
+function renderizarListaEscenarios(escenarios) {
+    const c = document.getElementById('items-list');
+    if (!escenarios.length) { c.innerHTML = emptyState('escenarios'); return; }
+    c.innerHTML = escenarios.map(es => `
+        <div class="iglesia-item" onclick="irAlElemento(${es.latitude},${es.longitude},'escenario',${es.id})">
+            <div class="iglesia-avatar"
+                 style="background:${COLOR_ESCENARIO};font-size:17px;border-radius:10px;">⚽</div>
+            <div class="iglesia-info">
+                <div class="iglesia-nombre">${es.name}</div>
+                <div class="iglesia-denom" style="color:#C2410C;">Escenario Deportivo</div>
+                <div class="iglesia-dir">📍 ${es.address}</div>
+                ${es.contact    ? `<div class="iglesia-dir">📞 ${es.contact}</div>`                              : ''}
+                <div class="iglesia-dir">⛪ Disponible: ${es.available_for_churches ? 'Sí' : 'No'}</div>
             </div>
             <svg class="iglesia-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -658,9 +813,9 @@ function irAlElemento(lat, lng, tipo, id) {
         markersLayer.eachLayer(layer => {
             if (layer._itemData?.id === id) {
                 if (isMobile()) {
-                    tipo === 'iglesia'
-                        ? mostrarPopupMovilIglesia(layer._itemData)
-                        : mostrarPopupMovilEvento(layer._itemData);
+                    if (tipo === 'iglesia')       mostrarPopupMovilIglesia(layer._itemData);
+                    else if (tipo === 'escenario') mostrarPopupMovilEscenario(layer._itemData);
+                    else                           mostrarPopupMovilEvento(layer._itemData);
                     cerrarDrawer();
                 } else {
                     layer.openPopup();
@@ -677,8 +832,9 @@ function irAIglesia(lat, lng, id) { irAlElemento(lat, lng, 'iglesia', id); }
 //  POPUP MÓVIL — IGLESIA
 // ════════════════════════════════════════════════════════════════
 function mostrarPopupMovilIglesia(ig) {
-    const color = colorDenom(ig.denominacion);
+    const color = ig.municipality ? colorPorMunicipio(ig.municipality) : colorDenom(ig.denominacion);
     document.getElementById('popup-movil-content').innerHTML = `
+        ${ig.foto_url ? `<img src="${ig.foto_url}" alt="${ig.nombre}" style="width:100%;height:160px;object-fit:cover;border-radius:14px;margin-bottom:14px;">` : ''}
         <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;">
             <div style="width:46px;height:46px;flex-shrink:0;background:${color};
                 border-radius:14px;display:flex;align-items:center;justify-content:center;
@@ -690,11 +846,12 @@ function mostrarPopupMovilIglesia(ig) {
             </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#475569;">
-            ${ig.pastor_sacerdote      ? infoRow('👤','Pastor / Sacerdote', ig.pastor_sacerdote) : ''}
-            ${ig.telefono              ? infoRowLink('📞','Teléfono',`<a href="tel:${ig.telefono}" style="color:#1E3A8A;font-weight:600;">${ig.telefono}</a>`) : ''}
-            ${ig.celular_institucional ? infoRowLink('📱','Celular institucional',`<a href="tel:${ig.celular_institucional}" style="color:#1E3A8A;font-weight:600;">${ig.celular_institucional}</a>`) : ''}
-            ${ig.correo_institucional  ? infoRowLink('✉️','Correo institucional',`<a href="mailto:${ig.correo_institucional}" style="color:#1E3A8A;font-weight:600;">${ig.correo_institucional}</a>`) : ''}
-            ${ig.email                 ? infoRowLink('✉️','Correo contacto',`<a href="mailto:${ig.email}" style="color:#1E3A8A;font-weight:600;">${ig.email}</a>`) : ''}
+            ${ig.municipality         ? infoRow('🏷️','Municipio', ig.municipality + (ig.department ? ', '+ig.department : '')) : ''}
+            ${ig.pastor_sacerdote     ? infoRow('👤','Pastor / Sacerdote', ig.pastor_sacerdote) : ''}
+            ${ig.telefono             ? infoRowLink('📞','Teléfono',`<a href="tel:${ig.telefono}" style="color:#1E3A8A;font-weight:600;">${ig.telefono}</a>`) : ''}
+            ${ig.celular_institucional? infoRowLink('📱','Celular institucional',`<a href="tel:${ig.celular_institucional}" style="color:#1E3A8A;font-weight:600;">${ig.celular_institucional}</a>`) : ''}
+            ${ig.correo_institucional ? infoRowLink('✉️','Correo institucional',`<a href="mailto:${ig.correo_institucional}" style="color:#1E3A8A;font-weight:600;">${ig.correo_institucional}</a>`) : ''}
+            ${ig.email                ? infoRowLink('✉️','Correo contacto',`<a href="mailto:${ig.email}" style="color:#1E3A8A;font-weight:600;">${ig.email}</a>`) : ''}
             ${infoRow('📍','Dirección', ig.direccion||'')}
         </div>
         <a href="https://maps.google.com/?q=${ig.latitud},${ig.longitud}" target="_blank"
@@ -730,6 +887,36 @@ function mostrarPopupMovilEvento(ev) {
         <a href="https://maps.google.com/?q=${ev.latitud},${ev.longitud}" target="_blank"
            style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;
                   padding:13px;background:${COLOR_EVENTO};color:white;border-radius:14px;
+                  font-size:13px;font-weight:700;text-decoration:none;">
+            🗺️ Abrir en Google Maps
+        </a>`;
+    abrirPopupMovil();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  POPUP MÓVIL — ESCENARIO DEPORTIVO
+// ════════════════════════════════════════════════════════════════
+function mostrarPopupMovilEscenario(es) {
+    const disponible = es.available_for_churches ? 'Sí' : 'No';
+    document.getElementById('popup-movil-content').innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;">
+            <div style="width:46px;height:46px;flex-shrink:0;background:${COLOR_ESCENARIO};
+                border-radius:14px;display:flex;align-items:center;justify-content:center;
+                font-size:24px;box-shadow:0 4px 12px rgba(234,88,12,.4);">⚽</div>
+            <div>
+                <h3 style="font-weight:700;color:#1E293B;font-size:16px;margin:0;">${es.name}</h3>
+                <span style="display:inline-block;background:#FFF7ED;color:#C2410C;font-size:11px;
+                    padding:3px 10px;border-radius:99px;font-weight:700;margin-top:5px;">Escenario Deportivo</span>
+            </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#475569;">
+            ${infoRow('📍', 'Dirección', es.address)}
+            ${es.contact ? infoRowLink('📞','Contacto',`<a href="tel:${es.contact}" style="color:${COLOR_ESCENARIO};font-weight:600;">${es.contact}</a>`) : ''}
+            ${infoRow('⛪', 'Disponible para iglesias', disponible)}
+        </div>
+        <a href="https://maps.google.com/?q=${es.latitude},${es.longitude}" target="_blank"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;
+                  padding:13px;background:${COLOR_ESCENARIO};color:white;border-radius:14px;
                   font-size:13px;font-weight:700;text-decoration:none;">
             🗺️ Abrir en Google Maps
         </a>`;
@@ -798,10 +985,15 @@ function actualizarContadores(total) {
     document.getElementById('counter-badge').textContent  = total;
     const label = modoActual === 'iglesias'
         ? `${total} iglesia${total !== 1 ? 's' : ''}`
+        : modoActual === 'escenarios'
+        ? `${total} escenario${total !== 1 ? 's' : ''}`
         : `${total} evento${total !== 1 ? 's' : ''}`;
     document.getElementById('mode-counter').textContent   = label;
     document.getElementById('mode-counter').style.color   =
-        total === 0 ? '#EF4444' : (modoActual === 'eventos' ? '#B45309' : '#1E3A8A');
+        total === 0 ? '#EF4444'
+        : modoActual === 'eventos'    ? '#B45309'
+        : modoActual === 'escenarios' ? '#C2410C'
+        : '#1E3A8A';
 }
 
 function actualizarBadgeFlotante(total) {
@@ -813,6 +1005,10 @@ function actualizarBadgeFlotante(total) {
         badge.textContent = `${total} iglesia${total!==1?'s':''} en el mapa`;
         pill.className = 'badge-pill';
         dot.className  = 'badge-dot';
+    } else if (modoActual === 'escenarios') {
+        badge.textContent = `${total} escenario${total!==1?'s':''} en el mapa`;
+        pill.className = 'badge-pill badge-pill-eventos';
+        dot.style.background = COLOR_ESCENARIO;
     } else {
         badge.textContent = `${total} evento${total!==1?'s':''} en el mapa`;
         pill.className = 'badge-pill badge-pill-eventos';
@@ -842,7 +1038,7 @@ function mostrarError(msg) {
             </div>
             <p style="font-size:.85rem;font-weight:600;color:#ef4444;">Error al cargar</p>
             <p style="font-size:.72rem;color:#94a3b8;margin-top:4px;">${msg}</p>
-            <button onclick="modoActual==='iglesias'?loadIglesias():loadEventos()"
+            <button onclick="modoActual==='iglesias'?loadIglesias():modoActual==='escenarios'?loadEscenarios():loadEventos()"
                     style="margin-top:14px;padding:9px 20px;background:#1E3A8A;color:white;
                            border:none;border-radius:10px;font-size:.75rem;font-weight:700;
                            cursor:pointer;font-family:inherit;">
@@ -852,7 +1048,9 @@ function mostrarError(msg) {
 }
 
 function emptyState(tipo) {
-    const msg = tipo === 'iglesias' ? 'No hay iglesias disponibles' : 'No hay eventos disponibles';
+    const msg = tipo === 'iglesias'   ? 'No hay iglesias disponibles'
+              : tipo === 'escenarios' ? 'No hay escenarios disponibles'
+              : 'No hay eventos disponibles';
     return `<div class="state-center">
         <div class="state-icon" style="background:#f1f5f9;">
             <svg class="w-6 h-6" style="color:#cbd5e1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

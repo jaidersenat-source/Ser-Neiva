@@ -9,22 +9,34 @@ use App\Models\Iglesia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use App\Imports\IglesiasImport;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
 class IglesiaController extends Controller
 {
     // ── Listado ───────────────────────────────────────────────
-    public function index(): View
+    public function index(\Illuminate\Http\Request $request): View
     {
-        $iglesias = Iglesia::with('ayudas')       // eager loading evita N+1
-                           ->latest()
-                           ->paginate(15);
+        $query = Iglesia::with('ayudas')->latest();
+
+        if ($request->filled('municipality')) {
+            $query->where('municipality', $request->municipality);
+        }
+
+        $iglesias      = $query->paginate(15)->withQueryString();
+        $municipios    = Iglesia::select('municipality')
+                            ->whereNotNull('municipality')
+                            ->where('municipality', '!=', '')
+                            ->distinct()
+                            ->orderBy('municipality')
+                            ->pluck('municipality');
 
         return view('admin.iglesias.index', [
-            'iglesias' => $iglesias,
-            'total'    => Iglesia::count(),
-            'activas'  => Iglesia::where('estado', 'activo')->count(),
+            'iglesias'   => $iglesias,
+            'total'      => Iglesia::count(),
+            'activas'    => Iglesia::where('estado', 'activo')->count(),
+            'municipios' => $municipios,
         ]);
     }
 
@@ -40,14 +52,19 @@ class IglesiaController extends Controller
     // ── Guardar ───────────────────────────────────────────────
     public function store(IglesiaRequest $request): RedirectResponse
     {
-        $iglesia = Iglesia::create($request->validated());
+        $data = $request->validated();
+        unset($data['photo']);
 
-        // Sincronizar ayudas (attach con IDs del request)
+        if ($request->hasFile('photo')) {
+            $data['photo'] = $request->file('photo')->store('iglesias', 'public');
+        }
+
+        $iglesia = Iglesia::create($data);
         $iglesia->ayudas()->sync($request->ayudasIds());
 
         return redirect()
             ->route('admin.iglesias.index')
-            ->with('success', "Iglesia «{$iglesia->nombre}» registrada correctamente.");
+            ->with('success', "Iglesia «{$iglesia->official_name}» registrada correctamente.");
     }
 
     // ── Ver detalle ───────────────────────────────────────────
@@ -61,6 +78,8 @@ class IglesiaController extends Controller
     // ── Editar ────────────────────────────────────────────────
     public function edit(Iglesia $iglesia): View
     {
+        $this->authorize('update', $iglesia);
+
         $iglesia->load('ayudas');
 
         return view('admin.iglesias.edit', [
@@ -73,22 +92,37 @@ class IglesiaController extends Controller
     // ── Actualizar ────────────────────────────────────────────
     public function update(IglesiaRequest $request, Iglesia $iglesia): RedirectResponse
     {
-        $iglesia->update($request->validated());
+        $this->authorize('update', $iglesia);
 
-        // sync() agrega las nuevas y elimina las que ya no están
+        $data = $request->validated();
+        unset($data['photo']);
+
+        if ($request->hasFile('photo')) {
+            if ($iglesia->photo) {
+                Storage::disk('public')->delete($iglesia->photo);
+            }
+            $data['photo'] = $request->file('photo')->store('iglesias', 'public');
+        }
+
+        $iglesia->update($data);
         $iglesia->ayudas()->sync($request->ayudasIds());
 
         return redirect()
             ->route('admin.iglesias.show', $iglesia)
-            ->with('success', "Iglesia «{$iglesia->nombre}» actualizada correctamente.");
+            ->with('success', "Iglesia «{$iglesia->official_name}» actualizada correctamente.");
     }
 
     // ── Eliminar ──────────────────────────────────────────────
     public function destroy(Iglesia $iglesia): RedirectResponse
     {
-        $nombre = $iglesia->nombre;
+        $this->authorize('delete', $iglesia);
 
-        // Al eliminar la iglesia, el cascade borra las filas del pivote
+        $nombre = $iglesia->official_name;
+
+        if ($iglesia->photo) {
+            Storage::disk('public')->delete($iglesia->photo);
+        }
+
         $iglesia->delete();
 
         return redirect()

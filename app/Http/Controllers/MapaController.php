@@ -9,15 +9,19 @@ class MapaController extends Controller
 {
     public function index(): View
     {
-    $totalIglesias   = Iglesia::activas()->count();
-    $denominaciones  = Iglesia::activas()
-                        ->select('denominacion')
-                        ->distinct()
-                        ->pluck('denominacion');
+        $isActive = fn($q) => $q->where('estado', 'activo')->orWhere('church_status', 'Active');
 
-    // Obtén los datos que necesitas pasar a JS
-    $datosDesdePHP = Iglesia::activas()->get();
+        $totalIglesias = Iglesia::where($isActive)->count();
 
-    return view('mapa.index', compact('totalIglesias', 'denominaciones', 'datosDesdePHP'));
-}
+        $denominaciones = Iglesia::where($isActive)
+            ->get()
+            ->map(fn($i) => $i->denomination ?: $i->denominacion)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $datosDesdePHP = Iglesia::where($isActive)->get();
+
+        return view('mapa.index', compact('totalIglesias', 'denominaciones', 'datosDesdePHP'));
+    }
 }

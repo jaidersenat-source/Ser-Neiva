@@ -11,10 +11,20 @@ class IglesiaApiController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Iglesia::where('estado', 'activo');
+        $query = Iglesia::where(function ($q) {
+            $q->where('estado', 'activo')
+              ->orWhere('church_status', 'Active');
+        });
 
         if ($request->filled('denominacion')) {
-            $query->where('denominacion', $request->denominacion);
+            $query->where(function ($q) use ($request) {
+                $q->where('denominacion', $request->denominacion)
+                  ->orWhere('denomination', $request->denominacion);
+            });
+        }
+
+        if ($request->filled('municipality')) {
+            $query->where('municipality', $request->municipality);
         }
 
         if ($request->filled('comuna')) {
@@ -23,25 +33,40 @@ class IglesiaApiController extends Controller
 
         $iglesias = $query
             ->select([
-                'id', 'nombre', 'denominacion', 'direccion',
+                'id', 'nombre', 'official_name',
+                'denominacion', 'denomination',
+                'direccion', 'address',
+                'municipality', 'department',
                 'comuna', 'latitud', 'longitud',
-                'pastor_sacerdote', 'telefono', 'email', 'descripcion',
-                'fecha_nacimiento_lider',
+                'pastor_sacerdote', 'pastor_full_name',
+                'telefono', 'phone_mobile', 'phone_landline',
+                'email', 'correo_institucional',
+                'celular_institucional', 'photo',
+                'fecha_nacimiento_lider', 'pastor_birth_date',
             ])
             ->get()
             ->map(fn($i) => [
-                'id'               => $i->id,
-                'nombre'           => $i->nombre,
-                'denominacion'     => $i->denominacion,
-                'direccion'        => $i->direccion,
-                'comuna'           => $i->comuna,
-                'latitud'          => (float) $i->latitud,
-                'longitud'         => (float) $i->longitud,
-                'pastor_sacerdote' => $i->pastor_sacerdote,
-                'telefono'         => $i->telefono,
-                'email'            => $i->email,
-                'descripcion'      => $i->descripcion,
-                'fecha_nacimiento_lider' => $i->fecha_nacimiento_lider,
+                'id'                     => $i->id,
+                'nombre'                 => $i->official_name ?: $i->nombre,
+                'denominacion'           => $i->denomination  ?: $i->denominacion,
+                'direccion'              => $i->address       ?: $i->direccion,
+                'municipality'           => $i->municipality,
+                'department'             => $i->department    ?: 'Huila',
+                'comuna'                 => $i->comuna,
+                'latitud'                => (float) $i->latitud,
+                'longitud'               => (float) $i->longitud,
+                'pastor_sacerdote'       => $i->pastor_full_name ?: $i->pastor_sacerdote,
+                'telefono'               => $i->phone_mobile    ?: $i->phone_landline ?: $i->telefono,
+                'celular_institucional'  => $i->phone_mobile    ?: $i->celular_institucional,
+                'email'                  => $i->email           ?: $i->correo_institucional,
+                'correo_institucional'   => $i->email           ?: $i->correo_institucional,
+                'foto_url'               => $i->photo ? asset('storage/' . $i->photo) : null,
+                'fecha_nacimiento_lider' => $i->fecha_nacimiento_lider
+                    ? $i->fecha_nacimiento_lider->format('Y-m-d')
+                    : null,
+                'pastor_birth_date'      => $i->pastor_birth_date
+                    ? \Carbon\Carbon::parse($i->pastor_birth_date)->format('Y-m-d')
+                    : null,
             ]);
 
         return response()->json([

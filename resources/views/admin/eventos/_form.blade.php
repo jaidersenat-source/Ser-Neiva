@@ -29,8 +29,11 @@
                 <option value="">Seleccione una iglesia...</option>
                 @foreach($iglesias as $iglesia)
                     <option value="{{ $iglesia->id }}"
+                            data-lat="{{ $iglesia->latitud ?? '' }}"
+                            data-lng="{{ $iglesia->longitud ?? '' }}"
+                            data-address="{{ addslashes($iglesia->address ?? '') }}"
                             {{ old('iglesia_id', $evento->iglesia_id ?? '') == $iglesia->id ? 'selected' : '' }}>
-                        {{ $iglesia->nombre }}
+                        {{ $iglesia->official_name }}
                     </option>
                 @endforeach
             </select>
@@ -518,6 +521,56 @@
     window.centrarEnNeiva = function () {
         map.flyTo(NEIVA, 14, { duration: 1 });
     };
+
+    /* ════════════════════════════════════════════════════════════
+       IGLESIA SELECCIONADA → centrar mapa en su ubicación
+    ════════════════════════════════════════════════════════════ */
+    const iglesiaSelect = document.getElementById('iglesia_id');
+    if (iglesiaSelect) {
+        iglesiaSelect.addEventListener('change', function () {
+            const opt = this.options[this.selectedIndex];
+            const lat = parseFloat(opt.dataset.lat);
+            const lng = parseFloat(opt.dataset.lng);
+            const addr = opt.dataset.address || '';
+
+            if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                map.flyTo([lat, lng], 16, { duration: 1.2 });
+                marker.setLatLng([lat, lng]).openPopup();
+                latInput.value = lat.toFixed(8);
+                lngInput.value = lng.toFixed(8);
+                latInput.classList.remove('error');
+                lngInput.classList.remove('error');
+
+                // Rellenar dirección del evento si está vacío
+                if (addr && !dirInput.value.trim()) {
+                    dirInput.removeEventListener('input', debouncedGeocodificar);
+                    dirInput.value = addr;
+                    dirInput.addEventListener('input', debouncedGeocodificar);
+                }
+
+                geoSetOk('Ubicación de la iglesia seleccionada');
+            }
+        });
+
+        // Al cargar, si ya hay una iglesia seleccionada (modo edición) centrar el mapa
+        if (iglesiaSelect.value) {
+            const opt = iglesiaSelect.options[iglesiaSelect.selectedIndex];
+            const lat = parseFloat(opt.dataset.lat);
+            const lng = parseFloat(opt.dataset.lng);
+            if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                // Solo centrar si no hay coords propias del evento ya guardadas
+                const eventoLat = parseFloat(latInput.value);
+                const eventoLng = parseFloat(lngInput.value);
+                const sinCoords = (eventoLat === 2.9274 && eventoLng === -75.2819);
+                if (sinCoords) {
+                    map.setView([lat, lng], 16);
+                    marker.setLatLng([lat, lng]).openPopup();
+                    latInput.value = lat.toFixed(8);
+                    lngInput.value = lng.toFixed(8);
+                }
+            }
+        }
+    }
 
     /* Forzar redibujado si el mapa estaba en un tab oculto */
     setTimeout(() => map.invalidateSize(), 300);

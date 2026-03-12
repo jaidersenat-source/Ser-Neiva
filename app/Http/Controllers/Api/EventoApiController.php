@@ -8,6 +8,44 @@ use Illuminate\Http\Request;
 
 class EventoApiController extends Controller
 {
+    private function formatEvent(Evento $evento): array
+    {
+        return [
+            'id'    => $evento->id,
+            'title' => $evento->titulo,
+            'start' => $evento->fecha_inicio->toDateString(),
+            'end'   => $evento->fecha_fin
+                ? $evento->fecha_fin->addDay()->toDateString()
+                : null,
+            'extendedProps' => [
+                'iglesia'          => $evento->iglesia->nombre ?? null,
+                'tipo_evento'      => $evento->tipo_evento,
+                'direccion_evento' => $evento->direccion_evento,
+                'estado'           => $evento->estado,
+            ],
+        ];
+    }
+
+    public function getNeivaEvents(): \Illuminate\Http\JsonResponse
+    {
+        $eventos = Evento::with('iglesia')
+            ->where('estado', 'activo')
+            ->whereHas('iglesia', fn($q) => $q->where('municipality', 'Neiva'))
+            ->get();
+
+        return response()->json($eventos->map(fn($e) => $this->formatEvent($e)));
+    }
+
+    public function getHuilaEvents(): \Illuminate\Http\JsonResponse
+    {
+        $eventos = Evento::with('iglesia')
+            ->where('estado', 'activo')
+            ->whereHas('iglesia', fn($q) => $q->where('department', 'Huila'))
+            ->get();
+
+        return response()->json($eventos->map(fn($e) => $this->formatEvent($e)));
+    }
+
     public function index(Request $request)
     {
         // Puedes agregar filtros por fecha, tipo, etc. si lo necesitas

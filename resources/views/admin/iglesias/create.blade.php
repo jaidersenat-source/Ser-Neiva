@@ -14,7 +14,7 @@
 </div>
 
 <div class="max-w-4xl">
-    <form action="{{ route('admin.iglesias.store') }}" method="POST" novalidate>
+    <form action="{{ route('admin.iglesias.store') }}" method="POST" enctype="multipart/form-data" novalidate>
         @csrf
         @include('admin.iglesias._form')
 

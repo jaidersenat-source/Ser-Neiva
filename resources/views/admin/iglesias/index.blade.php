@@ -42,6 +42,30 @@
         </button>
     </div>
 
+    {{-- Filtro por municipio --}}
+    <form method="GET" action="{{ route('admin.iglesias.index') }}" id="form-municipio" class="flex items-center gap-2">
+        <select name="municipality"
+                onchange="document.getElementById('form-municipio').submit()"
+                class="text-sm border border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 bg-white
+                       focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A]
+                       hover:border-slate-300 transition-colors cursor-pointer">
+            <option value="">&#x1F4CD; Todos los municipios</option>
+            @foreach($municipios as $mun)
+                <option value="{{ $mun }}" {{ request('municipality') === $mun ? 'selected' : '' }}>
+                    {{ $mun }}
+                </option>
+            @endforeach
+        </select>
+        @if(request('municipality'))
+            <a href="{{ route('admin.iglesias.index') }}"
+               class="text-xs text-slate-400 hover:text-red-500 transition-colors" title="Quitar filtro">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </a>
+        @endif
+    </form>
+
     <div class="toolbar-right">
         <a href="{{ route('admin.iglesias.create') }}" class="btn-primary" aria-label="Registrar nueva iglesia">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -128,32 +152,39 @@
             <tbody id="tabla-body">
                 @forelse($iglesias as $iglesia)
                     <tr class="iglesia-row-data"
-                        data-nombre="{{ strtolower($iglesia->nombre) }}"
-                        data-denominacion="{{ strtolower($iglesia->denominacion) }}"
-                        data-pastor="{{ strtolower($iglesia->pastor_sacerdote ?? '') }}"
+                        data-nombre="{{ strtolower($iglesia->official_name ?? '') }}"
+                        data-denominacion="{{ strtolower($iglesia->denomination ?? '') }}"
+                        data-pastor="{{ strtolower($iglesia->pastor_full_name ?? '') }}"
                         data-comuna="{{ strtolower($iglesia->comuna ?? '') }}"
+                        data-municipality="{{ strtolower($iglesia->municipality ?? '') }}"
                         data-ayudas="{{ implode(',', $iglesia->ayudas->pluck('id')->toArray()) }}">
 
                         {{-- Nombre + dirección --}}
                         <td>
                             <div class="flex items-center gap-3">
-                                <div class="iglesia-avatar-table">{{ substr($iglesia->nombre, 0, 1) }}</div>
+                                <div class="iglesia-avatar-table">{{ substr($iglesia->official_name ?? '?', 0, 1) }}</div>
                                 <div class="min-w-0">
                                     <p class="text-sm font-semibold text-slate-800 leading-tight searchable-nombre">
-                                        {{ $iglesia->nombre }}
+                                        {{ $iglesia->official_name }}
                                     </p>
                                     <p class="text-xs text-slate-400 mt-0.5 truncate max-w-[180px] lg:max-w-xs">
-                                        {{ $iglesia->direccion }}
+                                        {{ $iglesia->address }}
                                     </p>
+                                    @if($iglesia->municipality)
+                                        <span class="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full
+                                                     bg-blue-50 text-blue-600 border border-blue-100">
+                                            📍 {{ $iglesia->municipality }}
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                         </td>
 
                         {{-- Denominación --}}
                         <td>
-                            <span class="denom-chip">{{ $iglesia->denominacion }}</span>
+                            <span class="denom-chip">{{ $iglesia->denomination }}</span>
                             <br>
-                            <span class="text-xs text-slate-500">Promedio asistentes: <b>{{ $iglesia->promedio_asistentes ?? '—' }}</b></span>
+                            <span class="text-xs text-slate-500">Miembros aprox.: <b>{{ $iglesia->approx_members ?? '—' }}</b></span>
                         </td>
 
                         {{-- Comuna --}}
@@ -163,14 +194,14 @@
 
                         {{-- Pastor (solo lg+) --}}
                         <td class="hidden lg:table-cell text-xs text-slate-500">
-                            {{ $iglesia->pastor_sacerdote ?? '—' }}
+                            {{ $iglesia->pastor_full_name ?? '—' }}
                         </td>
 
                         {{-- Estado --}}
                         <td>
-                            <span class="estado-badge {{ $iglesia->estado === 'activo' ? 'estado-activo' : 'estado-inactivo' }}">
-                                <span class="estado-dot {{ $iglesia->estado === 'activo' ? 'dot-activo' : 'dot-inactivo' }}" aria-hidden="true"></span>
-                                {{ $iglesia->estado === 'activo' ? 'Activa' : 'Inactiva' }}
+                            <span class="estado-badge {{ $iglesia->church_status === 'Active' ? 'estado-activo' : 'estado-inactivo' }}">
+                                <span class="estado-dot {{ $iglesia->church_status === 'Active' ? 'dot-activo' : 'dot-inactivo' }}" aria-hidden="true"></span>
+                                {{ $iglesia->church_status === 'Active' ? 'Activa' : ($iglesia->church_status === 'Suspended' ? 'Suspendida' : 'Inactiva') }}
                             </span>
                         </td>
 
@@ -178,23 +209,23 @@
                         <td>
                             <div class="flex items-center justify-end gap-1">
                                 <a href="{{ route('admin.iglesias.show', $iglesia) }}"
-                                   class="action-btn action-btn--view" title="Ver detalle" aria-label="Ver {{ $iglesia->nombre }}">
+                                   class="action-btn action-btn--view" title="Ver detalle" aria-label="Ver {{ $iglesia->official_name }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                     </svg>
                                 </a>
                                 <a href="{{ route('admin.iglesias.edit', $iglesia) }}"
-                                   class="action-btn action-btn--edit" title="Editar" aria-label="Editar {{ $iglesia->nombre }}">
+                                   class="action-btn action-btn--edit" title="Editar" aria-label="Editar {{ $iglesia->official_name }}">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
                                 </a>
                                 <form method="POST" action="{{ route('admin.iglesias.destroy', $iglesia) }}"
-                                      class="form-eliminar-iglesia" data-nombre="{{ addslashes($iglesia->nombre) }}">
+                                      class="form-eliminar-iglesia" data-nombre="{{ addslashes($iglesia->official_name ?? '') }}">
                                     @csrf @method('DELETE')
                                     <button type="button" class="action-btn action-btn--delete btn-eliminar-iglesia"
-                                            title="Eliminar" aria-label="Eliminar {{ $iglesia->nombre }}">
+                                            title="Eliminar" aria-label="Eliminar {{ $iglesia->official_name }}">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
@@ -242,24 +273,24 @@
     <div class="mobile-cards" id="mobile-cards-container">
         @forelse($iglesias as $iglesia)
               <div class="iglesia-card card-filtrable"
-                  data-nombre="{{ strtolower($iglesia->nombre) }}"
-                  data-denominacion="{{ strtolower($iglesia->denominacion) }}"
-                  data-pastor="{{ strtolower($iglesia->pastor_sacerdote ?? '') }}"
+                  data-nombre="{{ strtolower($iglesia->official_name ?? '') }}"
+                  data-denominacion="{{ strtolower($iglesia->denomination ?? '') }}"
+                  data-pastor="{{ strtolower($iglesia->pastor_full_name ?? '') }}"
                   data-comuna="{{ strtolower($iglesia->comuna ?? '') }}"
                   data-ayudas="{{ implode(',', $iglesia->ayudas->pluck('id')->toArray()) }}">
 
                 {{-- Header de la card --}}
                 <div class="iglesia-card-header">
-                    <div class="iglesia-avatar-card">{{ substr($iglesia->nombre, 0, 1) }}</div>
+                    <div class="iglesia-avatar-card">{{ substr($iglesia->official_name ?? '?', 0, 1) }}</div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-bold text-slate-800 leading-tight mb-1 truncate">
-                            {{ $iglesia->nombre }}
+                            {{ $iglesia->official_name }}
                         </p>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="denom-chip">{{ $iglesia->denominacion }}</span>
-                            <span class="estado-badge {{ $iglesia->estado === 'activo' ? 'estado-activo' : 'estado-inactivo' }}">
-                                <span class="estado-dot {{ $iglesia->estado === 'activo' ? 'dot-activo' : 'dot-inactivo' }}" aria-hidden="true"></span>
-                                {{ $iglesia->estado === 'activo' ? 'Activa' : 'Inactiva' }}
+                            <span class="denom-chip">{{ $iglesia->denomination }}</span>
+                            <span class="estado-badge {{ $iglesia->church_status === 'Active' ? 'estado-activo' : 'estado-inactivo' }}">
+                                <span class="estado-dot {{ $iglesia->church_status === 'Active' ? 'dot-activo' : 'dot-inactivo' }}" aria-hidden="true"></span>
+                                {{ $iglesia->church_status === 'Active' ? 'Activa' : ($iglesia->church_status === 'Suspended' ? 'Suspendida' : 'Inactiva') }}
                             </span>
                         </div>
                     </div>
@@ -269,19 +300,20 @@
                 <div class="grid grid-cols-1 gap-1.5 mb-3 text-xs text-slate-500">
                     <div class="flex items-start gap-2">
                         <span class="text-slate-300 flex-shrink-0 mt-0.5">📍</span>
-                        <span class="truncate">{{ $iglesia->direccion }}</span>
+                        <span class="truncate">{{ $iglesia->address }}</span>
                     </div>
-                    @if($iglesia->pastor_sacerdote)
+                    @if($iglesia->pastor_full_name)
                         <div class="flex items-center gap-2">
                             <span class="text-slate-300 flex-shrink-0">👤</span>
-                            <span class="truncate">{{ $iglesia->pastor_sacerdote }}</span>
+                            <span class="truncate">{{ $iglesia->pastor_full_name }}</span>
                         </div>
                     @endif
-                    @if($iglesia->telefono)
+                    @php $tel = $iglesia->phone_mobile ?: $iglesia->phone_landline; @endphp
+                    @if($tel)
                         <div class="flex items-center gap-2">
                             <span class="text-slate-300 flex-shrink-0">📞</span>
-                            <a href="tel:{{ $iglesia->telefono }}" class="text-blue-500 font-medium">
-                                {{ $iglesia->telefono }}
+                            <a href="tel:{{ $tel }}" class="text-blue-500 font-medium">
+                                {{ $tel }}
                             </a>
                         </div>
                     @endif
@@ -296,7 +328,7 @@
                 {{-- Acciones --}}
                 <div class="iglesia-card-actions">
                     <a href="{{ route('admin.iglesias.show', $iglesia) }}"
-                       class="card-action-btn card-btn-view" aria-label="Ver {{ $iglesia->nombre }}">
+                       class="card-action-btn card-btn-view" aria-label="Ver {{ $iglesia->official_name }}">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -304,14 +336,14 @@
                         Ver
                     </a>
                     <a href="{{ route('admin.iglesias.edit', $iglesia) }}"
-                       class="card-action-btn card-btn-edit" aria-label="Editar {{ $iglesia->nombre }}">
+                       class="card-action-btn card-btn-edit" aria-label="Editar {{ $iglesia->official_name }}">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
                         Editar
                     </a>
                     <form method="POST" action="{{ route('admin.iglesias.destroy', $iglesia) }}"
-                          class="form-eliminar-iglesia" data-nombre="{{ addslashes($iglesia->nombre) }}"
+                          class="form-eliminar-iglesia" data-nombre="{{ addslashes($iglesia->official_name ?? '') }}"
                           style="flex:1; display:flex;">
                         @csrf @method('DELETE')
                         <button type="button" class="card-action-btn card-btn-delete btn-eliminar-iglesia" style="flex:1;"
