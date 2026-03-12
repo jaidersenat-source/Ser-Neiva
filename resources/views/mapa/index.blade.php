@@ -145,6 +145,15 @@
                             onclick="filtrarDenominacion('{{ $denom }}')">{{ $denom }}</button>
                 @endforeach
             </div>
+
+            <div class="filtros-label mt-3">Filtrar por municipio</div>
+            <div class="filtros-chips" id="filtros-municipio">
+                <button class="filtro-btn active" data-mun="" onclick="filtrarMunicipio('')">Todos</button>
+                @foreach(\App\Models\Iglesia::select('municipality')->whereNotNull('municipality')->where('municipality','!=','')->distinct()->orderBy('municipality')->pluck('municipality') as $mun)
+                    <button class="filtro-btn" data-mun="{{ $mun }}"
+                            onclick="filtrarMunicipio('{{ $mun }}')">{{ $mun }}</button>
+                @endforeach
+            </div>
         </div>
 
         <div class="results-bar">
@@ -353,6 +362,7 @@ function crearIconoEscenario() {
 let modoActual      = 'iglesias';   // 'iglesias' | 'eventos' | 'escenarios'
 let todosLosItems   = [];           // datos cargados del API activo
 let filtroActual    = '';           // denominación (solo iglesias)
+let municipioActual = '';           // municipio (solo iglesias)
 let busquedaActual  = '';
 
 // ════════════════════════════════════════════════════════════════
@@ -363,6 +373,7 @@ function setMode(modo) {
 
     modoActual     = modo;
     filtroActual   = '';
+    municipioActual = '';
     busquedaActual = '';
 
     // Limpiar inputs búsqueda
@@ -401,7 +412,7 @@ function setMode(modo) {
 
     // Restablecer chip "Todas" en filtros
     document.querySelectorAll('.filtro-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.value === '');
+        b.classList.toggle('active', b.dataset.value === '' && b.dataset.mun === undefined || b.dataset.mun === '');
     });
 
     // Spinner badge color
@@ -427,7 +438,8 @@ async function loadIglesias() {
     mostrarLoading();
     try {
         const params = new URLSearchParams();
-        if (filtroActual) params.append('denominacion', filtroActual);
+        if (filtroActual)    params.append('denominacion', filtroActual);
+        if (municipioActual) params.append('municipality', municipioActual);
 
         const url  = `${API_BASE}/iglesias${params.size ? '?' + params : ''}`;
         const res  = await fetch(url, { headers: { 'Accept': 'application/json' } });
@@ -574,8 +586,19 @@ function filtrarDenominacion(valor) {
         if (el) el.value = '';
     });
     ocultarClearBtns();
-    document.querySelectorAll('.filtro-btn').forEach(b =>
+    document.querySelectorAll('#filtros-denominacion .filtro-btn').forEach(b =>
         b.classList.toggle('active', b.dataset.value === valor));
+
+    const spinner = document.getElementById('mode-spinner');
+    spinner.className = 'visible';
+    loadIglesias();
+}
+
+function filtrarMunicipio(valor) {
+    if (modoActual !== 'iglesias') return;
+    municipioActual = valor;
+    document.querySelectorAll('#filtros-municipio .filtro-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.mun === valor));
 
     const spinner = document.getElementById('mode-spinner');
     spinner.className = 'visible';
