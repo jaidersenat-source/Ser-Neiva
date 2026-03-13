@@ -81,7 +81,7 @@
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
             <input type="text" id="buscador-iglesias"
-                   placeholder="Buscar iglesia, pastor, denominación…"
+                   placeholder="Buscar iglesia, pastor, denominación, jurídico…"
                    aria-label="Buscar iglesia"
                    oninput="filtrarTabla(this.value)"
                    class="pl-10 pr-9 py-2.5 text-sm rounded-xl border border-slate-200 bg-white
@@ -281,7 +281,9 @@
                         data-pastor="{{ strtolower($iglesia->pastor_full_name ?? '') }}"
                         data-comuna="{{ strtolower($iglesia->specific_location ?? $iglesia->comuna ?? '') }}"
                         data-municipality="{{ strtolower($iglesia->municipality ?? '') }}"
-                        data-ayudas="{{ implode(',', $iglesia->ayudas->pluck('id')->toArray()) }}">
+                        data-ayudas="{{ implode(',', $iglesia->ayudas->pluck('id')->toArray()) }}"
+                        data-juridico="{{ strtolower(implode(' ', array_filter([$iglesia->legal_registration_type, $iglesia->legal_registration_number, $iglesia->legal_entity_granting, $iglesia->legal_personality_type, $iglesia->entidad_registrada_colombia]))) }}"
+                        data-tiene-juridico="{{ ($iglesia->entidad_registrada_colombia === 'SI' || !empty($iglesia->legal_registration_type) || !empty($iglesia->legal_registration_number)) ? '1' : '0' }}">
 
                         {{-- Nombre + dirección --}}
                         <td class="px-6 py-4">
@@ -439,7 +441,9 @@
                  data-denominacion="{{ strtolower($iglesia->denomination ?? '') }}"
                  data-pastor="{{ strtolower($iglesia->pastor_full_name ?? '') }}"
                  data-comuna="{{ strtolower($iglesia->specific_location ?? $iglesia->comuna ?? '') }}"
-                 data-ayudas="{{ implode(',', $iglesia->ayudas->pluck('id')->toArray()) }}">
+                 data-ayudas="{{ implode(',', $iglesia->ayudas->pluck('id')->toArray()) }}"
+                 data-juridico="{{ strtolower(implode(' ', array_filter([$iglesia->legal_registration_type, $iglesia->legal_registration_number, $iglesia->legal_entity_granting, $iglesia->legal_personality_type, $iglesia->entidad_registrada_colombia]))) }}"
+                 data-tiene-juridico="{{ ($iglesia->entidad_registrada_colombia === 'SI' || !empty($iglesia->legal_registration_type) || !empty($iglesia->legal_registration_number)) ? '1' : '0' }}">
 
                 {{-- Header --}}
                 <div class="flex items-start gap-3 mb-3">
@@ -694,12 +698,22 @@ function filtrarTabla(query) {
     var btnClear = document.getElementById('btn-clear');
     if (btnClear) btnClear.classList.toggle('hidden', q.length === 0);
 
+    // Detectar búsqueda de datos jurídicos
+    var esBusquedaJuridica = q.length > 2 && (
+        q.includes('juridic') || q.includes('jur\u00eddic') ||
+        q.includes('datos jur') || q.includes('registrad') ||
+        q.includes('personeria') || q.includes('person\u00e9r') ||
+        q.includes('resoluc') || q.includes('personali')
+    );
+
     // Tabla
     var filas = document.querySelectorAll('.iglesia-row-data');
     var visiblesTabla = 0;
     filas.forEach(function(fila) {
         var txt = !q || fila.dataset.nombre.includes(q) || fila.dataset.denominacion.includes(q) ||
-                  fila.dataset.pastor.includes(q) || fila.dataset.comuna.includes(q);
+                  fila.dataset.pastor.includes(q) || fila.dataset.comuna.includes(q) ||
+                  (fila.dataset.juridico || '').includes(q) ||
+                  (esBusquedaJuridica && fila.dataset.tieneJuridico === '1');
         var ay  = !ayudaSeleccionada || (fila.dataset.ayudas || '').split(',').includes(ayudaSeleccionada);
         var show = txt && ay;
         fila.style.display = show ? '' : 'none';
@@ -713,7 +727,9 @@ function filtrarTabla(query) {
     var visiblesCards = 0;
     cards.forEach(function(card) {
         var txt = !q || card.dataset.nombre.includes(q) || card.dataset.denominacion.includes(q) ||
-                  card.dataset.pastor.includes(q) || card.dataset.comuna.includes(q);
+                  card.dataset.pastor.includes(q) || card.dataset.comuna.includes(q) ||
+                  (card.dataset.juridico || '').includes(q) ||
+                  (esBusquedaJuridica && card.dataset.tieneJuridico === '1');
         var ay  = !ayudaSeleccionada || (card.dataset.ayudas || '').split(',').includes(ayudaSeleccionada);
         var show = txt && ay;
         card.style.display = show ? '' : 'none';
