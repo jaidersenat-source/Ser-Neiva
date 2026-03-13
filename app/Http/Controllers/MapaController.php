@@ -9,7 +9,7 @@ class MapaController extends Controller
 {
     public function index(): View
     {
-        $isActive = fn($q) => $q->where('estado', 'activo')->orWhere('church_status', 'Active');
+        $isActive = fn($q) => $q->where('estado', 'activo')->orWhere('church_status', 'Activo');
 
         $totalIglesias = Iglesia::where($isActive)->count();
 

@@ -13,7 +13,7 @@ class IglesiaApiController extends Controller
     {
         $query = Iglesia::where(function ($q) {
             $q->where('estado', 'activo')
-              ->orWhere('church_status', 'Active');
+              ->orWhere('church_status', 'Activo');
         });
 
         if ($request->filled('denominacion')) {

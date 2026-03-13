@@ -14,15 +14,15 @@ class DashboardController extends Controller
         // ── Stats generales ──────────────────────────────────
         $stats = [
             'total'          => Iglesia::count(),
-            'activas'        => Iglesia::where('church_status', 'Active')->count(),
-            'inactivas'      => Iglesia::where('church_status', 'Inactive')->count(),
+            'activas'        => Iglesia::where('church_status', 'Activo')->count(),
+            'inactivas'      => Iglesia::where('church_status', 'Inactivo')->count(),
             'denominaciones' => Iglesia::distinct('denomination')->count('denomination'),
 
             // Asistentes
-            'total_asistentes' => (int) Iglesia::where('church_status', 'Active')
+            'total_asistentes' => (int) Iglesia::where('church_status', 'Activo')
                                         ->whereNotNull('approx_members')
                                         ->sum('approx_members'),
-            'promedio_global'  => (int) Iglesia::where('church_status', 'Active')
+            'promedio_global'  => (int) Iglesia::where('church_status', 'Activo')
                                         ->whereNotNull('approx_members')
                                         ->avg('approx_members'),
             'con_asistentes'   => Iglesia::whereNotNull('approx_members')->count(),
@@ -30,15 +30,15 @@ class DashboardController extends Controller
 
         // ── Clasificación por tamaño de congregación ─────────
         $tamanos = [
-            'pequeña'  => Iglesia::where('church_status', 'Active')->whereBetween('approx_members', [1, 49])->count(),
-            'mediana'  => Iglesia::where('church_status', 'Active')->whereBetween('approx_members', [50, 200])->count(),
-            'grande'   => Iglesia::where('church_status', 'Active')->where('approx_members', '>', 200)->count(),
-            'sin_dato' => Iglesia::where('church_status', 'Active')->whereNull('approx_members')->count(),
+            'pequeña'  => Iglesia::where('church_status', 'Activo')->whereBetween('approx_members', [1, 49])->count(),
+            'mediana'  => Iglesia::where('church_status', 'Activo')->whereBetween('approx_members', [50, 200])->count(),
+            'grande'   => Iglesia::where('church_status', 'Activo')->where('approx_members', '>', 200)->count(),
+            'sin_dato' => Iglesia::where('church_status', 'Activo')->whereNull('approx_members')->count(),
         ];
 
         // ── Top 5 iglesias por asistentes ────────────────────
         $topIglesias = Iglesia::select('id', 'official_name', 'denomination', 'approx_members')
-            ->where('church_status', 'Active')
+            ->where('church_status', 'Activo')
             ->whereNotNull('approx_members')
             ->orderByDesc('approx_members')
             ->take(5)
@@ -52,7 +52,7 @@ class DashboardController extends Controller
 
         // ── Por denominación ──────────────────────────────────
         $porDenominacion = Iglesia::select('denomination', DB::raw('count(*) as total'))
-            ->where('church_status', 'Active')
+            ->where('church_status', 'Activo')
             ->groupBy('denomination')
             ->orderByDesc('total')
             ->take(6)

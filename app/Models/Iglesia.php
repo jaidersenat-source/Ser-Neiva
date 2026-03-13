@@ -81,6 +81,22 @@ class Iglesia extends Model
         'ministries'             => 'array',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (Iglesia $iglesia) {
+            // Sincronizar church_status ↔ estado
+            if ($iglesia->isDirty('estado') && !$iglesia->isDirty('church_status')) {
+                $iglesia->church_status = $iglesia->estado === 'activo' ? 'Activo' : 'Inactivo';
+            } elseif ($iglesia->isDirty('church_status') && !$iglesia->isDirty('estado')) {
+                $iglesia->estado = $iglesia->church_status === 'Activo' ? 'activo' : 'inactivo';
+            }
+            // Si church_status es null pero estado tiene valor
+            if (is_null($iglesia->church_status) && $iglesia->estado) {
+                $iglesia->church_status = $iglesia->estado === 'activo' ? 'Activo' : 'Inactivo';
+            }
+        });
+    }
+
        public const ENTIDAD_OPCIONES = [
         'SI'         => 'Sí, registrada',
         'NO'         => 'No registrada',
