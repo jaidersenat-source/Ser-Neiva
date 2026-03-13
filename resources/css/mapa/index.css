@@ -1,823 +1,892 @@
-/* ═══════════════════════════════════════════════════════
-   resources/css/mapa/index.css
-   Vista del Mapa – Responsive (mobile-first)
-   ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   SIRN — MAPA RELIGIOSO  |  Paleta corporativa azul/cyan
+   Fuentes: DM Sans (UI) + Space Grotesk (números/badges)
+   ═══════════════════════════════════════════════════════════════ */
 
-/* ── Variables locales ── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+
+/* ── Variables ─────────────────────────────────────────────────── */
 :root {
-    --mobile-topbar-h: 52px;
-    --sidebar-w: 380px;
-    --color-primary: #1E3A8A;
+  --c-navy:        #0D2149;
+  --c-navy-mid:    #1E3A8A;
+  --c-blue:        #1D62C1;
+  --c-cyan:        #00B4D8;
+  --c-cyan-light:  #90E0EF;
+  --c-cyan-pale:   #CAF0F8;
+  --c-accent:      #7c3aed;
+  --c-success:     #10B981;
+  --c-danger:      #EF4444;
+
+  --c-bg:          #F0F4FA;
+  --c-surface:     #FFFFFF;
+  --c-surface2:    #F7FAFF;
+  --c-border:      rgba(30,58,138,.10);
+  --c-border2:     rgba(30,58,138,.18);
+
+  --c-text:        #0D2149;
+  --c-text2:       #3B5280;
+  --c-text3:       #7E94BA;
+
+  --radius-sm:     8px;
+  --radius-md:     12px;
+  --radius-lg:     18px;
+  --radius-xl:     24px;
+
+  --sidebar-w:     340px;
+  --topbar-h:      56px;
+  --modebar-h:     56px;
+  --font:          'DM Sans', system-ui, sans-serif;
+  --font-num:      'Space Grotesk', system-ui, sans-serif;
+
+  --shadow-sm:  0 1px 4px rgba(13,33,73,.08);
+  --shadow-md:  0 4px 16px rgba(13,33,73,.12);
+  --shadow-lg:  0 8px 32px rgba(13,33,73,.16);
 }
 
-/* ══════════════════════════════════════
-   BARRA SUPERIOR MÓVIL (search + hamburger)
-   Solo visible en < 768px
-══════════════════════════════════════ */
-#mobile-topbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: white;
-    border-bottom: 1px solid #e2e8f0;
-    height: var(--mobile-topbar-h);
-    flex-shrink: 0;
-    z-index: 1001; /* Asegura que esté por encima del mode-bar */
+/* ── Reset base ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  height: 100%; overflow: hidden;
+  font-family: var(--font);
+  background: var(--c-bg);
+  color: var(--c-text);
 }
 
-.topbar-search {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    background: #f1f5f9;
-    border-radius: 10px;
-    color: #94a3b8;
-    font-size: .82rem;
-    cursor: pointer;
-}
-
-.topbar-list-btn {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-primary);
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-}
-
-/* Ocultar topbar en tablet/desktop */
-@media (min-width: 768px) {
-    #mobile-topbar {
-        display: none;
-    }
-}
-
-/* ══════════════════════════════════════
-   LAYOUT PRINCIPAL (#sirn-layout)
-   mobile: columna (topbar encima, mapa llena)
-   desktop: fila (sidebar izq + mapa der)
-══════════════════════════════════════ */
-#sirn-layout {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: calc(100% - var(--mobile-topbar-h)); /* resta topbar en móvil */
-    overflow: hidden;
-}
-
-@media (min-width: 768px) {
-    #sirn-layout {
-        flex-direction: row;
-        height: 100%; /* topbar oculto en desktop, usa 100% */
-    }
-}
-
-/* ══════════════════════════════════════
-   SIDEBAR / DRAWER (#panel-lateral)
-══════════════════════════════════════ */
-
-/* ─── MÓVIL: drawer desde abajo ─── */
-#panel-lateral {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 85vh;
-    max-height: 85vh;
-    background: white;
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, .15);
-    z-index: 500;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-
-    /* Animación: fuera de pantalla */
-    transform: translateY(100%);
-    transition: transform .35s cubic-bezier(.4, 0, .2, 1);
-    will-change: transform;
-}
-
-#panel-lateral.drawer-open {
-    transform: translateY(0);
-}
-
-/* ─── TABLET / DESKTOP: sidebar fijo a la izq ─── */
-@media (min-width: 768px) {
-    #panel-lateral {
-        position: relative;
-        top: auto;
-        bottom: auto;
-        left: auto;
-        right: auto;
-        width: var(--sidebar-w);
-        min-width: var(--sidebar-w);
-        height: 100%;
-        max-height: 100%;
-        border-radius: 0;
-        box-shadow: 2px 0 12px rgba(0, 0, 0, .06);
-        transform: none;
-        transition: none;
-        z-index: 10;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-}
-
-/* ── Overlay del drawer (solo móvil) ── */
-#drawer-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, .45);
-    z-index: 499;
-    opacity: 0;
-    transition: opacity .3s;
-}
-#drawer-overlay.visible {
-    display: block;
-    opacity: 1;
-}
-@media (min-width: 768px) {
-    #drawer-overlay { display: none !important; }
-}
-
-/* ── Drawer handle (solo móvil) ── */
-.drawer-handle {
-    display: flex;
-    justify-content: center;
-    padding: 10px 0 4px;
-    cursor: grab;
-}
-.drawer-handle span {
-    width: 36px;
-    height: 4px;
-    background: #cbd5e1;
-    border-radius: 99px;
-}
-@media (min-width: 768px) {
-    .drawer-handle { display: none; }
-}
-
-/* ── Cabecera del panel ── */
-.panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px 10px;
-    border-bottom: 1px solid #f1f5f9;
-    flex-shrink: 0;
-}
-.panel-header-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.05rem;
-    color: var(--color-primary);
-    font-weight: 700;
-}
-.panel-header-sub {
-    font-size: .7rem;
-    color: #94a3b8;
-    margin-top: 2px;
-}
-.panel-close-btn {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f1f5f9;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    color: #64748b;
-    transition: background .15s;
-}
-.panel-close-btn:hover { background: #e2e8f0; }
-
-@media (min-width: 768px) {
-    .panel-close-btn { display: none; }
-}
-
-/* ── Stats strip ── */
-.stats-strip {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 10px 16px;
-    background: #fafbfc;
-    border-bottom: 1px solid #f1f5f9;
-    flex-shrink: 0;
-}
-.stat-item { text-align: center; }
-.stat-num {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--color-primary);
-    line-height: 1;
-}
-.stat-num--amber { color: #D97706; }
-.stat-label {
-    font-size: .6rem;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    font-weight: 600;
-    margin-top: 2px;
-}
-.stat-sep {
-    width: 1px;
-    height: 24px;
-    background: #e2e8f0;
-}
-
-/* ── Buscador (visible solo desktop) ── */
-.panel-search {
-    display: none;
-    padding: 10px 16px;
-    border-bottom: 1px solid #f1f5f9;
-    flex-shrink: 0;
-}
-@media (min-width: 768px) {
-    .panel-search { display: block; }
-}
-
-.search-inner {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    background: #f1f5f9;
-    border-radius: 10px;
-    border: 1.5px solid transparent;
-    transition: border-color .15s, background .15s;
-}
-.search-inner:focus-within {
-    border-color: var(--color-primary);
-    background: #EFF6FF;
-}
-.search-inner input {
-    flex: 1;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: .82rem;
-    color: #334155;
-    font-family: inherit;
-}
-.search-inner input::placeholder { color: #94a3b8; }
-.search-clear {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 2px;
-}
-
-/* ── Filtros ── */
-.filtros-wrap {
-    padding: 10px 16px;
-    border-bottom: 1px solid #f1f5f9;
-    flex-shrink: 0;
-}
-.filtros-label {
-    font-size: .68rem;
-    color: #94a3b8;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    margin-bottom: 8px;
-}
-.filtros-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-.filtro-btn {
-    padding: 5px 12px;
-    background: #f1f5f9;
-    border: 1.5px solid transparent;
-    border-radius: 99px;
-    font-size: .72rem;
-    font-weight: 600;
-    color: #475569;
-    cursor: pointer;
-    transition: all .15s;
-    white-space: nowrap;
-}
-.filtro-btn:hover { background: #e2e8f0; }
-.filtro-btn.active {
-    background: #EFF6FF;
-    border-color: #3B82F6;
-    color: #1E3A8A;
-}
-
-/* ── Barra de resultados ── */
-.results-bar {
-    padding: 8px 16px;
-    background: #fafbfc;
-    border-bottom: 1px solid #f1f5f9;
-    font-size: .72rem;
-    color: #94a3b8;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-.results-bar span { color: var(--color-primary); font-weight: 800; }
-
-/* ── Lista de iglesias (scrollable) ── */
-#iglesias-list {
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
-}
-
-/* Estado centrado (cargando, error, sin resultados) */
-.state-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    text-align: center;
-}
-.state-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 12px;
-}
-
-/* ── Item de iglesia ── */
-.iglesia-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    cursor: pointer;
-    transition: background .12s;
-    border-bottom: 1px solid #f8fafc;
-}
-.iglesia-item:hover { background: #f8fafc; }
-.iglesia-item:active { background: #f1f5f9; }
-
-.iglesia-avatar {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 16px;
-    font-weight: 800;
-}
-.iglesia-info {
-    flex: 1;
-    min-width: 0; /* permite truncar */
-}
-.iglesia-nombre {
-    font-size: .82rem;
-    font-weight: 700;
-    color: #1e293b;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.iglesia-denom {
-    font-size: .68rem;
-    font-weight: 700;
-    margin-top: 1px;
-}
-.iglesia-dir {
-    font-size: .7rem;
-    color: #94a3b8;
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.iglesia-pastor {
-    font-size: .7rem;
-    color: #64748b;
-    margin-top: 1px;
-}
-.iglesia-arrow {
-    flex-shrink: 0;
-    color: #cbd5e1;
-}
-
-/* ══════════════════════════════════════
-   MAPA (#map-wrapper + #map)
-══════════════════════════════════════ */
-#map-wrapper {
-    position: relative;
-    flex: 1;
-    min-height: 0;       /* clave para que flex no desborde */
-    overflow: hidden;
-}
-
-#map {
-    width: 100%;
-    height: 100%;
-}
-
-/* ── Botón recentrar ── */
-.map-ctrl-recenter {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 400;
-    width: 40px;
-    height: 40px;
-    background: white;
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform .15s;
-}
-.map-ctrl-recenter:hover { transform: scale(1.08); }
-
-/* ── Badge flotante (solo móvil) ── */
-#badge-flotante {
-    display: block;
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 400;
-}
-.badge-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    background: white;
-    border-radius: 99px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, .12);
-    font-size: .72rem;
-    font-weight: 700;
-    color: #334155;
-    white-space: nowrap;
-}
-.badge-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #34D399;
-    flex-shrink: 0;
-}
-
-@media (min-width: 768px) {
-    #badge-flotante { display: none; }
-}
-
-/* ── Botón "Ver lista" flotante (solo móvil) ── */
-#btn-ver-lista {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    position: absolute;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 400;
-    padding: 10px 20px;
-    background: var(--color-primary);
-    color: white;
-    border: none;
-    border-radius: 99px;
-    font-size: .8rem;
-    font-weight: 700;
-    box-shadow: 0 4px 16px rgba(30, 58, 138, .35);
-    cursor: pointer;
-    transition: transform .15s;
-    white-space: nowrap;
-}
-#btn-ver-lista:hover { transform: translateX(-50%) scale(1.04); }
-
-@media (min-width: 768px) {
-    #btn-ver-lista { display: none; }
-}
-
-/* ══════════════════════════════════════
-   POPUP MÓVIL (detalle de iglesia)
-══════════════════════════════════════ */
-#popup-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, .45);
-    z-index: 599;
-}
-#popup-overlay.visible { display: block; }
-
-#popup-movil {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: 75vh;
-    background: white;
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, .18);
-    z-index: 600;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-
-    transform: translateY(100%);
-    transition: transform .35s cubic-bezier(.4, 0, .2, 1);
-}
-#popup-movil.open {
-    transform: translateY(0);
-}
-
-.popup-movil-inner {
-    padding: 6px 20px 28px;
-}
-
-/* En desktop ocultamos popup móvil completamente */
-@media (min-width: 768px) {
-    #popup-movil,
-    #popup-overlay { display: none !important; }
-}
-
-/* ══════════════════════════════════════
-   POPUP DE LEAFLET (desktop)
-══════════════════════════════════════ */
-.sirn-popup .leaflet-popup-content-wrapper {
-    border-radius: 14px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, .15);
-    padding: 14px;
-}
-.sirn-popup .leaflet-popup-tip {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
-}
-
-/* ══════════════════════════════════════
-   UTILIDADES (safe area para móviles
-   con notch / home indicator)
-══════════════════════════════════════ */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-    #btn-ver-lista {
-        bottom: calc(24px + env(safe-area-inset-bottom));
-    }
-    #popup-movil .popup-movil-inner {
-        padding-bottom: calc(28px + env(safe-area-inset-bottom));
-    }
-    #panel-lateral {
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-}
- /* ══════════════════════════════════════
-   BARRA SUPERIOR MÓVIL — Búsqueda + Hamburger
-   Solo visible en < 768px
-══════════════════════════════════════ */
-#mobile-topbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    background: white;
-    border-bottom: 1px solid #e2e8f0;
-    height: var(--mobile-topbar-h, 52px);
-    flex-shrink: 0;
-    z-index: 20;
-}
-
-/* Contenedor del input de búsqueda */
-.topbar-search {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    background: #f1f5f9;
-    border-radius: 10px;
-    min-width: 0;
-    border: 1.5px solid transparent;
-    transition: border-color .15s, background .15s;
-}
-.topbar-search:focus-within {
-    border-color: #3B82F6;
-    background: #EFF6FF;
-}
-
-/* Input real (reemplaza el <span> estático) */
-.topbar-search input {
-    flex: 1;
-    min-width: 0;      /* evita desborde en pantallas pequeñas */
-    border: none;
-    outline: none;
-    background: transparent;
-    font-size: .82rem;
-    color: #334155;
-    font-family: inherit;
-    -webkit-appearance: none;  /* quita estilo nativo en iOS */
-}
-.topbar-search input::placeholder { color: #94a3b8; }
-
-/* Botón limpiar búsqueda */
-.topbar-clear {
-    flex-shrink: 0;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    color: #94a3b8;
-    transition: color .15s;
-    -webkit-tap-highlight-color: transparent;
-}
-.topbar-clear:hover  { color: #475569; }
-.topbar-clear.hidden { display: none; }
-
-/* Botón hamburger */
-.topbar-list-btn {
-    flex-shrink: 0;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #1E3A8A;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: transform .15s, opacity .15s;
-    -webkit-tap-highlight-color: transparent;
-}
-.topbar-list-btn:active {
-    transform: scale(.92);
-    opacity: .85;
-}
-
-/* Ocultar en tablet/desktop */
-@media (min-width: 768px) {
-    #mobile-topbar { display: none; }
-}
-
-/* ══ TOGGLE MODE BAR ══════════════════════════════════════════ */
-/* Responsive: en móvil, el mode-bar va debajo del topbar */
+/* ══════════════════════════════════════════════════════════════════
+   MODE BAR  — píldora flotante sobre el mapa
+   ══════════════════════════════════════════════════════════════════ */
 #mode-bar {
-    position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255,255,255,0.97);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(255,255,255,0.8);
-    border-radius: 99px;
-    padding: 5px 6px;
-    box-shadow: 0 6px 28px rgba(30,58,138,.16), 0 1px 4px rgba(0,0,0,.06);
-    max-width: calc(100vw - 32px);
-    top: calc(var(--mobile-topbar-h, 52px) + 10px);
+  /* Flota sobre el mapa, centrado en el map-wrapper */
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  /* Glass transparente por defecto */
+  background: rgba(255,255,255,.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,.35);
+  box-shadow:
+    0 2px 12px rgba(13,33,73,.12),
+    0 1px 3px rgba(13,33,73,.08);
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 6px;
+  gap: 2px;
+  height: auto;
+  white-space: nowrap;
+  transition: background .22s, border-color .22s, box-shadow .22s;
+  animation: modeBarIn .35s cubic-bezier(.34,1.4,.64,1) both;
 }
-
-@media (max-width: 767px) {
-    #mode-bar {
-        position: static;
-        left: auto;
-        top: auto;
-        transform: none;
-        margin: 10px 0 0 0;
-        z-index: auto;
-        max-width: 100%;
-        box-shadow: 0 2px 8px rgba(30,58,138,.10);
-    }
-    #sirn-layout {
-        height: calc(100vh - var(--mobile-topbar-h, 52px));
-        min-height: 0;
-        overflow: hidden;
-    }
-    #panel-lateral {
-        max-height: 85vh;
-        overflow-y: auto;
-    }
+/* Hover: se vuelve más sólida */
+#mode-bar:hover {
+  background: rgba(255,255,255,.88);
+  border-color: rgba(255,255,255,.7);
+  box-shadow:
+    0 4px 20px rgba(13,33,73,.18),
+    0 1px 4px rgba(13,33,73,.10);
 }
-
-@media (min-width: 768px) {
-    #mode-bar {
-        top: calc(var(--nav-height, 56px) + 12px); /* en desktop, debajo del nav */
-    }
+@keyframes modeBarIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 .mode-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  border-radius: 99px;
-  font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: .8rem;
-  font-weight: 700;
-  letter-spacing: .02em;
-  cursor: pointer;
+  gap: 7px;
+  padding: 8px 16px;
   border: none;
+  border-radius: 99px;
   background: transparent;
-  color: #64748B;
-  transition: all .22s cubic-bezier(.4,0,.2,1);
+  /* Blanco con sombra de texto para legibilidad sobre el mapa */
+  color: rgba(255,255,255,.9);
+  text-shadow: 0 1px 3px rgba(0,0,0,.35);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .18s, color .18s, text-shadow .18s, box-shadow .18s;
+  letter-spacing: .01em;
   white-space: nowrap;
-  position: relative;
-  overflow: hidden;
 }
-.mode-btn svg { width: 15px; height: 15px; flex-shrink: 0; transition: transform .22s ease; }
-.mode-btn:hover { color: #1E293B; background: #F8FAFF; }
-
-/* Iglesias activo → azul */
-.mode-btn.iglesias.active {
-  background: #1E3A8A;
+.mode-btn svg {
+  width: 15px; height: 15px; flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.3));
+}
+/* Hover sobre botón inactivo: fondo semi-transparente leve */
+.mode-btn:hover:not(.active) {
+  background: rgba(255,255,255,.18);
   color: #fff;
-  box-shadow: 0 3px 12px rgba(30,58,138,.38);
 }
-.mode-btn.iglesias.active svg { transform: scale(1.1); }
-
-/* Eventos activo → dorado */
-.mode-btn.eventos.active {
-  background: #F59E0B;
+/* Activo: fondo sólido, texto blanco limpio */
+.mode-btn.active {
+  background: var(--c-navy-mid);
   color: #fff;
-  box-shadow: 0 3px 12px rgba(245,158,11,.4);
+  text-shadow: none;
+  box-shadow: 0 2px 10px rgba(30,58,138,.4);
 }
-.mode-btn.eventos.active svg { transform: scale(1.1); }
+.mode-btn.active svg { filter: none; }
+.mode-btn.active.iglesias   { background: var(--c-navy-mid); }
+.mode-btn.active.eventos    { background: #5b21b6; box-shadow: 0 2px 10px rgba(124,58,237,.4); }
+.mode-btn.active.escenarios { background: #B91C1C; box-shadow: 0 2px 10px rgba(185,28,28,.4); }
 
-/* Separador vertical */
+/* Cuando el pill está en hover, los botones inactivos cambian a texto oscuro */
+#mode-bar:hover .mode-btn:not(.active) {
+  color: var(--c-text2);
+  text-shadow: none;
+}
+#mode-bar:hover .mode-btn:not(.active) svg { filter: none; }
+#mode-bar:hover .mode-btn:hover:not(.active) {
+  background: var(--c-surface2);
+  color: var(--c-text);
+}
+
 .mode-sep {
-  width: 1px; height: 22px;
-  background: #E2E8F0;
+  width: 1px; height: 18px;
+  background: rgba(255,255,255,.35);
   flex-shrink: 0;
+  margin: 0 2px;
+  transition: background .22s;
+}
+#mode-bar:hover .mode-sep {
+  background: var(--c-border2);
 }
 
-/* Contador inline */
-#mode-counter {
-  font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: .73rem;
-  font-weight: 600;
-  color: #94A3B8;
-  padding: 0 6px;
-  white-space: nowrap;
-  min-width: 60px;
-  text-align: center;
-  transition: color .2s;
-}
+/* Spinner y contador: ocultos (eliminados visualmente) */
+#mode-spinner { display: none; }
+#mode-counter  { display: none; }
 
-/* Spinner dentro del mode bar */
-#mode-spinner {
-  display: none;
-  width: 14px; height: 14px;
-  border: 2px solid #E2E8F0;
-  border-top-color: #1E3A8A;
-  border-radius: 50%;
-  animation: msp .65s linear infinite;
-  flex-shrink: 0;
-}
-#mode-spinner.eventos-spin { border-top-color: #F59E0B; }
-#mode-spinner.visible { display: block; }
-@keyframes msp { to { transform: rotate(360deg); } }
-
-/* Toast sin datos */
+/* ── Toast ────────────────────────────────────────────────────── */
 #sirn-toast {
   position: fixed;
-  bottom: 28px;
+  bottom: 24px;
   left: 50%;
-  transform: translateX(-50%) translateY(16px);
-  z-index: 999;
-  background: #1E293B;
-  color: #fff;
-  font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: .82rem;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--c-navy);
+  color: white;
+  font-size: 13px;
   font-weight: 600;
-  padding: 11px 22px;
+  padding: 10px 20px;
   border-radius: 99px;
-  box-shadow: 0 8px 28px rgba(0,0,0,.22);
+  z-index: 4000;
   opacity: 0;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
   pointer-events: none;
-  transition: opacity .28s ease, transform .28s ease;
   white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(0,180,216,.3);
 }
 #sirn-toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
 
-/* Badge flotante actualizado para mostrar modo */
-.badge-pill-eventos { background: #FEF3C7; color: #92400E; }
-.badge-dot-eventos  { background: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,.25); }
+/* ══════════════════════════════════════════════════════════════════
+   MOBILE TOPBAR
+   ══════════════════════════════════════════════════════════════════ */
+#mobile-topbar {
+  display: none;
+  position: fixed;
+  top: var(--nav-h, 58px);
+  left: 0; right: 0;
+  z-index: 1050;
+  height: var(--topbar-h);
+  background: var(--c-navy-mid);
+  padding: 0 12px;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+
+.topbar-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,.10);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  height: 38px;
+  border: 1px solid rgba(255,255,255,.15);
+}
+.topbar-search input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: white;
+  font-family: var(--font);
+  font-size: 13px;
+}
+.topbar-search input::placeholder { color: rgba(255,255,255,.45); }
+.topbar-search input::-webkit-search-cancel-button { display: none; }
+
+.topbar-clear {
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,.55); padding: 2px;
+  display: flex; align-items: center; justify-content: center;
+  transition: color .15s;
+}
+.topbar-clear:hover { color: white; }
+.topbar-clear.hidden { display: none; }
+
+.topbar-list-btn {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s;
+}
+.topbar-list-btn:hover { background: rgba(255,255,255,.2); }
+
+/* ══════════════════════════════════════════════════════════════════
+   LAYOUT PRINCIPAL
+   ══════════════════════════════════════════════════════════════════ */
+#sirn-layout {
+  position: fixed;
+  top: var(--nav-h, 58px);
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── Drawer overlay ─────────────────────────────────────────────── */
+#drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1199;
+  background: rgba(13,33,73,.5);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity .25s;
+}
+#drawer-overlay.visible {
+  display: block;
+  opacity: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SIDEBAR / PANEL LATERAL
+   ══════════════════════════════════════════════════════════════════ */
+#panel-lateral {
+  width: var(--sidebar-w);
+  height: 100%;
+  background: var(--c-surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 1px solid var(--c-border2);
+  box-shadow: var(--shadow-md);
+  z-index: 100;
+  flex-shrink: 0;
+  /* Transición suave para colapsar/expandir */
+  transition: width .3s cubic-bezier(.4,0,.2,1),
+              opacity .3s ease,
+              box-shadow .3s ease;
+}
+/* Estado colapsado en desktop */
+#panel-lateral.collapsed {
+  width: 0;
+  opacity: 0;
+  border-right: none;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+/* ── Botón toggle del sidebar — FUERA del sidebar, siempre clickeable ── */
+#sidebar-toggle-btn {
+  display: none; /* oculto en móvil */
+}
+@media (min-width: 768px) {
+  #sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    /* Pegado al borde DERECHO del sidebar, sobresale hacia el mapa */
+    left: var(--sidebar-w);
+    transform: translateY(-50%);   /* solo centrado vertical, sin offset horizontal */
+    z-index: 200;
+    width: 20px;
+    height: 48px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border2);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    cursor: pointer;
+    color: var(--c-text3);
+    box-shadow: 3px 0 10px rgba(13,33,73,.10);
+    transition: left .3s cubic-bezier(.4,0,.2,1),
+                background .15s, color .15s, border-color .15s;
+  }
+  #sidebar-toggle-btn:hover {
+    background: var(--c-surface2);
+    color: var(--c-navy-mid);
+  }
+  #sidebar-toggle-btn svg {
+    width: 12px; height: 12px;
+    transition: transform .3s cubic-bezier(.4,0,.2,1);
+    flex-shrink: 0;
+  }
+  /* Colapsado: se va a left:0, navy, flecha gira → para reabrir */
+  #sidebar-toggle-btn.rotated {
+    left: 0;
+    background: var(--c-navy-mid);
+    color: white;
+    border-left: none;
+    border-color: var(--c-navy-mid);
+    box-shadow: 3px 0 16px rgba(13,33,73,.25);
+  }
+  #sidebar-toggle-btn.rotated:hover { background: var(--c-blue); }
+  #sidebar-toggle-btn.rotated svg   { transform: rotate(180deg); }
+}
+
+/* Handle drag (mobile) */
+.drawer-handle {
+  display: none;
+  justify-content: center;
+  padding: 10px 0 4px;
+  flex-shrink: 0;
+}
+.drawer-handle span {
+  width: 36px; height: 4px;
+  background: var(--c-border2);
+  border-radius: 99px;
+}
+
+/* ── Panel header ─────────────────────────────────────────────── */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  background: linear-gradient(135deg, var(--c-navy) 0%, var(--c-blue) 100%);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.panel-header::before {
+  content: '';
+  position: absolute;
+  right: -20px; top: -20px;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: rgba(0,180,216,.15);
+}
+.panel-header::after {
+  content: '';
+  position: absolute;
+  right: 40px; bottom: -30px;
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  background: rgba(0,180,216,.10);
+}
+.panel-header-title {
+  font-family: var(--font-num);
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: .01em;
+}
+.panel-header-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,.6);
+  margin-top: 2px;
+  letter-spacing: .03em;
+}
+/* Botón X móvil (dentro del drawer) */
+.panel-close-btn-mobile {
+  display: none;
+}
+@media (max-width: 767px) {
+  .panel-close-btn-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,.12);
+    border: none;
+    width: 28px; height: 28px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: rgba(255,255,255,.7);
+    transition: background .15s, color .15s;
+    flex-shrink: 0;
+    position: relative; z-index: 1;
+  }
+  .panel-close-btn-mobile:hover {
+    background: rgba(255,255,255,.22);
+    color: white;
+  }
+}
+
+/* ── Stats strip ─────────────────────────────────────────────── */
+.stats-strip {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--c-surface2);
+  border-bottom: 1px solid var(--c-border);
+  gap: 0;
+  flex-shrink: 0;
+}
+.stat-item {
+  flex: 1;
+  text-align: center;
+}
+.stat-num {
+  font-family: var(--font-num);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--c-navy-mid);
+  line-height: 1;
+}
+.stat-num--amber { color: var(--c-cyan); }
+.stat-label {
+  font-size: 10px;
+  color: var(--c-text3);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+.stat-sep {
+  width: 1px; height: 32px;
+  background: var(--c-border2);
+  flex-shrink: 0;
+}
+
+/* ── Buscador desktop ─────────────────────────────────────────── */
+.panel-search {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0;
+}
+.search-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--c-surface2);
+  border: 1.5px solid var(--c-border2);
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  height: 38px;
+  transition: border-color .18s, box-shadow .18s;
+}
+.search-inner:focus-within {
+  border-color: var(--c-cyan);
+  box-shadow: 0 0 0 3px rgba(0,180,216,.12);
+}
+.search-inner input {
+  flex: 1; background: none; border: none; outline: none;
+  font-family: var(--font); font-size: 13px; color: var(--c-text);
+}
+.search-inner input::placeholder { color: var(--c-text3); }
+.search-clear {
+  background: none; border: none; cursor: pointer;
+  color: var(--c-text3); padding: 2px;
+  display: flex; align-items: center; justify-content: center;
+  transition: color .15s;
+}
+.search-clear:hover { color: var(--c-text); }
+.search-clear.hidden { display: none; }
+
+/* ── Filtros ─────────────────────────────────────────────────── */
+.filtros-wrap {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.filtros-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--c-text3);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 7px;
+}
+.filtros-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.filtro-btn {
+  padding: 4px 11px;
+  border-radius: 99px;
+  border: 1.5px solid var(--c-border2);
+  background: var(--c-surface);
+  color: var(--c-text2);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .16s;
+  font-family: var(--font);
+  white-space: nowrap;
+}
+.filtro-btn:hover {
+  border-color: var(--c-cyan);
+  color: var(--c-blue);
+  background: rgba(0,180,216,.06);
+}
+.filtro-btn.active {
+  background: var(--c-navy-mid);
+  color: white;
+  border-color: var(--c-navy-mid);
+}
+.mt-3 { margin-top: 12px; }
+
+/* ── Results bar ─────────────────────────────────────────────── */
+.results-bar {
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text3);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--c-border);
+  flex-shrink: 0;
+}
+.results-bar span {
+  color: var(--c-cyan);
+  font-family: var(--font-num);
+  font-size: 13px;
+}
+
+/* ── Lista de ítems ──────────────────────────────────────────── */
+#items-list {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+#items-list::-webkit-scrollbar { width: 4px; }
+#items-list::-webkit-scrollbar-track { background: transparent; }
+#items-list::-webkit-scrollbar-thumb {
+  background: var(--c-border2);
+  border-radius: 99px;
+}
+
+/* ── Ítem de iglesia / genérico ─────────────────────────────── */
+.iglesia-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 16px;
+  cursor: pointer;
+  transition: background .15s;
+  border-bottom: 1px solid var(--c-border);
+}
+.iglesia-item:hover { background: var(--c-surface2); }
+.iglesia-item:active { background: rgba(0,180,216,.06); }
+
+.iglesia-avatar {
+  width: 38px; height: 38px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  color: white;
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: var(--shadow-sm);
+}
+.iglesia-info { flex: 1; min-width: 0; }
+.iglesia-nombre {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--c-text);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.iglesia-denom {
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.iglesia-dir {
+  font-size: 11px;
+  color: var(--c-text3);
+  margin-top: 2px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.iglesia-pastor {
+  font-size: 11px;
+  color: var(--c-text2);
+  margin-top: 2px;
+}
+.iglesia-arrow {
+  flex-shrink: 0;
+  color: var(--c-text3);
+  margin-top: 10px;
+}
+
+/* ── Estados vacío / error / loading ─────────────────────────── */
+.state-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+.state-icon {
+  width: 48px; height: 48px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 12px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MAPA
+   ══════════════════════════════════════════════════════════════════ */
+#map-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  /* El toggle flota entre sidebar y mapa */
+  isolation: isolate;
+}
+#map {
+  width: 100%; height: 100%;
+  z-index: 1;
+}
+
+/* ── Botón recentrar ─────────────────────────────────────────── */
+.map-ctrl-recenter {
+  position: absolute;
+  top: 12px; right: 12px;
+  z-index: 900;
+  width: 40px; height: 40px;
+  background: var(--c-surface);
+  border: 1.5px solid var(--c-border2);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: background .15s, box-shadow .15s;
+}
+.map-ctrl-recenter:hover {
+  background: var(--c-surface2);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── Badge flotante ─────────────────────────────────────────── */
+#badge-flotante {
+  position: absolute;
+  /* below the mode pill (~50px) + gap */
+  top: 72px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  pointer-events: none;
+}
+.badge-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--c-navy);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-num);
+  padding: 7px 14px;
+  border-radius: 99px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(0,180,216,.3);
+  white-space: nowrap;
+}
+.badge-pill-eventos {
+  background: rgba(13,33,73,.85);
+  border-color: rgba(124,58,237,.35);
+}
+.badge-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--c-cyan);
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.4); opacity: .7; }
+}
+
+/* ── Botón "Ver lista" ──────────────────────────────────────── */
+#btn-ver-lista {
+  position: absolute;
+  bottom: 80px; left: 16px;
+  z-index: 900;
+  display: none;
+  align-items: center;
+  gap: 7px;
+  background: var(--c-navy-mid);
+  color: white;
+  border: none;
+  border-radius: 99px;
+  padding: 10px 18px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: background .15s, transform .12s;
+}
+#btn-ver-lista:hover { background: var(--c-navy); transform: translateY(-1px); }
+
+/* ── Popup Leaflet ──────────────────────────────────────────── */
+.sirn-popup .leaflet-popup-content-wrapper {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--c-border2);
+  padding: 0;
+  overflow: hidden;
+}
+.sirn-popup .leaflet-popup-content {
+  margin: 14px 16px !important;
+}
+.sirn-popup .leaflet-popup-tip {
+  background: var(--c-surface) !important;
+}
+
+/* ── Cluster marker ─────────────────────────────────────────── */
+.marker-cluster-small,
+.marker-cluster-medium,
+.marker-cluster-large {
+  background: rgba(30,58,138,.15) !important;
+}
+.marker-cluster-small div,
+.marker-cluster-medium div,
+.marker-cluster-large div {
+  background: var(--c-navy-mid) !important;
+  color: white !important;
+  font-family: var(--font-num) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   POPUP MÓVIL (bottom sheet)
+   ══════════════════════════════════════════════════════════════════ */
+#popup-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  z-index: 1299;
+  background: rgba(13,33,73,.45);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity .25s;
+}
+#popup-overlay.visible { display: block; opacity: 1; }
+
+#popup-movil {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 1300;
+  background: var(--c-surface);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  transform: translateY(100%);
+  transition: transform .32s cubic-bezier(.34,1.26,.64,1);
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 -8px 40px rgba(13,33,73,.22);
+}
+#popup-movil.open { transform: translateY(0); }
+
+.popup-movil-inner {
+  padding: 0 18px 32px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   RESPONSIVE — MOBILE
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  /* En móvil el nav tiene 52px (definido en public.css) */
+  :root {
+    --topbar-h: 52px;  /* barra búsqueda móvil */
+  }
+
+  /* Ocultar toggle desktop en móvil — ya lo maneja #sidebar-toggle-btn con display:none global */
+
+  /* ── Mobile topbar (búsqueda + hamburger) debajo del nav ── */
+  #mobile-topbar {
+    display: flex;
+    top: var(--nav-h, 52px);   /* justo debajo del navbar */
+    z-index: 1050;
+  }
+
+  /* ── Botón "Ver lista" visible en móvil ── */
+  #btn-ver-lista { display: flex; }
+
+  /* ── El layout ocupa todo desde debajo de nav + topbar ── */
+  #sirn-layout {
+    top: calc(var(--nav-h, 52px) + var(--topbar-h));
+  }
+
+  /* ── Píldora de modos: más compacta en móvil ── */
+  #mode-bar {
+    top: 10px;
+    padding: 4px 5px;
+    gap: 1px;
+  }
+  /* Solo iconos en móvil (sin texto) */
+  .mode-btn span { display: none; }
+  .mode-btn {
+    padding: 8px 12px;
+    gap: 0;
+  }
+  .mode-sep { height: 16px; }
+
+  /* ── Badge flotante: debajo de la píldora ── */
+  #badge-flotante {
+    top: 62px;   /* píldora (~46px) + gap */
+  }
+
+  /* ── Recenter: esquina superior derecha ── */
+  .map-ctrl-recenter { top: 10px; right: 10px; }
+
+  /* ── Panel lateral: drawer desde abajo ── */
+  #panel-lateral {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    top: auto;
+    height: 82vh;
+    width: 100%;
+    border-right: none;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    z-index: 1200;
+    transform: translateY(100%);
+    transition: transform .32s cubic-bezier(.34,1.26,.64,1);
+    box-shadow: 0 -8px 40px rgba(13,33,73,.22);
+  }
+  #panel-lateral.drawer-open { transform: translateY(0); }
+
+  .drawer-handle { display: flex; }
+  .panel-close-btn { display: flex; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ══════════════════════════════════════════════════════════════════ */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.iglesia-item {
+  animation: fadeInUp .18s ease both;
+}

@@ -1,52 +1,46 @@
 @extends('layouts.admin')
 
-@section('title', 'Nuevo Evento')
-@section('page-title', 'Nuevo Evento')
-@section('page-subtitle', 'Registrar nuevo evento en el sistema')
+@section('title', 'Nueva Fundación')
+@section('page-title', 'Nueva Fundación')
+@section('page-subtitle', 'Registrar nueva fundación u organización social en el sistema')
 
 @section('content')
 
-{{-- ═══════════════════════════════════
-     HERO STRIP
-═══════════════════════════════════ --}}
+{{-- HERO --}}
 <div class="relative mb-6 rounded-2xl overflow-hidden"
-     style="background: linear-gradient(135deg, #2d1b69 0%, #4c1d95 45%, #7c3aed 100%);">
+     style="background: linear-gradient(135deg, #065f46 0%, #059669 45%, #10b981 100%);">
     <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <svg class="absolute right-0 top-0 h-full w-64 opacity-10" viewBox="0 0 200 120" preserveAspectRatio="none">
-            <polygon points="80,0 200,0 200,120 140,120" fill="#a78bfa"/>
-            <polygon points="115,0 200,0 200,120 170,120" fill="#c4b5fd"/>
-            <polygon points="155,0 200,0 200,55" fill="#ede9fe"/>
+            <polygon points="80,0 200,0 200,120 140,120" fill="#34d399"/>
+            <polygon points="115,0 200,0 200,120 170,120" fill="#6ee7b7"/>
+            <polygon points="155,0 200,0 200,55" fill="#a7f3d0"/>
         </svg>
     </div>
     <div class="relative z-10 px-6 py-5 sm:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                 style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-            </div>
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                 style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">🤝</div>
             <div>
-                <h2 class="text-white font-bold text-lg leading-tight">Nuevo Evento</h2>
-                <p class="text-xs mt-0.5" style="color: rgba(196,181,253,0.85);">
-                    Registrar nuevo evento en el sistema
+                <h2 class="text-white font-bold text-lg leading-tight">Nueva Fundación</h2>
+                <p class="text-xs mt-0.5" style="color: rgba(167,243,208,0.85);">
+                    Registrar nueva fundación u organización social
                 </p>
             </div>
         </div>
         <div class="hidden sm:flex items-center gap-2 text-xs" style="color: rgba(255,255,255,0.55);">
-            <a href="{{ route('admin.eventos.index') }}" class="hover:text-white transition-colors font-medium">Eventos</a>
+            <a href="{{ route('admin.foundations.index') }}" class="hover:text-white transition-colors font-medium">
+                Fundaciones
+            </a>
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
-            <span class="text-white font-semibold">Nuevo</span>
+            <span class="text-white font-semibold">Nueva</span>
         </div>
     </div>
 </div>
 
-<div class="max-w-3xl">
+<div class="max-w-2xl">
 
-    {{-- Errores --}}
     @if($errors->any())
         <div class="mb-5 bg-white rounded-2xl border border-red-200 shadow-sm overflow-hidden">
             <div class="flex items-center gap-3 px-5 py-3 border-b border-red-100" style="background:#FFF1F2;">
@@ -70,32 +64,29 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.eventos.store') }}" method="POST" novalidate>
+    <form action="{{ route('admin.foundations.store') }}" method="POST" novalidate>
         @csrf
-        @include('admin.eventos._form')
+        @include('admin.foundations._form')
 
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <button type="submit"
                     class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold
-                           text-white rounded-xl shadow-md transition-all
-                           hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
-                    style="background: linear-gradient(135deg, #2d1b69, #7c3aed);">
+                           text-white rounded-xl shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+                    style="background: linear-gradient(135deg, #065f46, #059669);">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                          d="M5 13l4 4L19 7"/>
                 </svg>
-                Guardar Evento
+                Guardar Fundación
             </button>
-            <a href="{{ route('admin.eventos.index') }}"
+            <a href="{{ route('admin.foundations.index') }}"
                class="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold
-                      rounded-xl border border-slate-200 text-slate-600 bg-white
-                      hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
+                      text-slate-600 bg-white rounded-xl border border-slate-200 hover:bg-slate-50 transition-all">
                 Cancelar
             </a>
         </div>
     </form>
+
 </div>
 
 @endsection

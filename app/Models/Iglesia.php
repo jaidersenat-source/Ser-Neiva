@@ -60,6 +60,8 @@ class Iglesia extends Model
         // ── Sección 7 y 8 ─────────────────────────────────────────
         'ministries',
         'additional_notes',
+        'schedule_weekdays',
+        'schedule_weekends',
         // ── Mapa ────────────────────────────────────────────────
         'latitud',
         'longitud',

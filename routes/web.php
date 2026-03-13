@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\CampaignController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FoundationController;
 use App\Http\Controllers\Admin\IglesiaController;
 use App\Http\Controllers\Admin\SportsVenueController;
 use App\Http\Controllers\MapaController;
@@ -19,12 +21,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(
     
    
 
-    // === IMPORTACIÓN MASIVA (corregido: sin /admin/ repetido) ===
+    // === IMPORTACIÓN MASIVA ===
     Route::get('/iglesias/import', [IglesiaController::class, 'import'])
         ->name('iglesias.import');
 
     Route::post('/iglesias/import', [IglesiaController::class, 'importStore'])
         ->name('iglesias.import.store');
+
+    Route::get('/iglesias/import/template', [IglesiaController::class, 'importTemplate'])
+        ->name('iglesias.import.template');
 
          // Recursos estándar para iglesias
     Route::resource('iglesias', IglesiaController::class);
@@ -33,8 +38,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(
     Route::resource('eventos',EventoController::class);
     Route::get('eventos-calendario', [EventoController::class, 'calendar'])->name('eventos.calendar');
 
+    // === FUNDACIONES ===
+    Route::resource('foundations', FoundationController::class);
+
     // === ESCENARIOS DEPORTIVOS ===
     Route::resource('sports_venues', SportsVenueController::class);
+
+    // === CAMPAÑAS DE CORREO ===
+    Route::resource('campaigns', CampaignController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::post('campaigns/{campaign}/send', [CampaignController::class, 'send'])->name('campaigns.send');
+    Route::post('campaigns/upload-image', [CampaignController::class, 'uploadImage'])->name('campaigns.upload-image');
 });
 
 // Reemplaza la ruta dashboard por defecto de Breeze

@@ -1,52 +1,40 @@
 @extends('layouts.admin')
 
-@section('title', 'Editar Escenario')
-@section('page-title', 'Editar Escenario Deportivo')
-@section('page-subtitle', $venue->name)
+@section('title', 'Editar Fundación')
+@section('page-title', 'Editar Fundación')
+@section('page-subtitle', $foundation->name)
 
 @section('content')
 
-{{-- ═══════════════════════════════════
-     HERO STRIP
-═══════════════════════════════════ --}}
+{{-- HERO --}}
 <div class="relative mb-6 rounded-2xl overflow-hidden"
-     style="background: linear-gradient(135deg, #7c2d12 0%, #c2410c 45%, #ea580c 100%);">
+     style="background: linear-gradient(135deg, #065f46 0%, #059669 45%, #10b981 100%);">
     <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <svg class="absolute right-0 top-0 h-full w-64 opacity-10" viewBox="0 0 200 120" preserveAspectRatio="none">
-            <polygon points="80,0 200,0 200,120 140,120" fill="#fb923c"/>
-            <polygon points="115,0 200,0 200,120 170,120" fill="#fdba74"/>
-            <polygon points="155,0 200,0 200,55" fill="#fed7aa"/>
+            <polygon points="80,0 200,0 200,120 140,120" fill="#34d399"/>
+            <polygon points="115,0 200,0 200,120 170,120" fill="#6ee7b7"/>
+            <polygon points="155,0 200,0 200,55" fill="#a7f3d0"/>
         </svg>
     </div>
     <div class="relative z-10 px-6 py-5 sm:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
-                 style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">⚽</div>
+                 style="background: rgba(255,255,255,0.15); backdrop-filter: blur(8px);">🤝</div>
             <div>
                 <h2 class="text-white font-bold text-lg leading-tight truncate max-w-xs sm:max-w-sm">
-                    {{ $venue->name }}
+                    {{ $foundation->name }}
                 </h2>
-                <div class="flex items-center gap-2 mt-0.5">
-                    <p class="text-xs" style="color: rgba(253,186,116,0.85);">Editando escenario deportivo</p>
-                    @if($venue->available_for_churches)
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full"
-                              style="background: rgba(255,255,255,0.15); color: #fed7aa;">
-                            <span class="w-1 h-1 rounded-full bg-green-400"></span>
-                            Disponible
-                        </span>
-                    @endif
-                </div>
+                <p class="text-xs mt-0.5" style="color: rgba(167,243,208,0.85);">Editando fundación</p>
             </div>
         </div>
-        {{-- Breadcrumb + acciones --}}
         <div class="hidden sm:flex items-center gap-2 text-xs" style="color: rgba(255,255,255,0.55);">
-            <a href="{{ route('admin.sports_venues.index') }}" class="hover:text-white transition-colors font-medium">
-                Escenarios
+            <a href="{{ route('admin.foundations.index') }}" class="hover:text-white transition-colors font-medium">
+                Fundaciones
             </a>
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
-            <span class="text-white/70 truncate max-w-[120px]">{{ Str::limit($venue->name, 20) }}</span>
+            <span class="text-white/70 truncate max-w-[120px]">{{ Str::limit($foundation->name, 20) }}</span>
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
             </svg>
@@ -57,7 +45,6 @@
 
 <div class="max-w-2xl">
 
-    {{-- Alerta de cambios no guardados --}}
     <div id="unsaved-alert"
          class="hidden mb-5 flex items-center gap-3 px-5 py-3.5 rounded-2xl"
          style="background:#FFFBEB; border:1px solid #FDE68A;">
@@ -68,12 +55,10 @@
         <p class="text-xs font-semibold text-amber-800">Tienes cambios sin guardar</p>
     </div>
 
-    {{-- Errores de validación --}}
     @if($errors->any())
         <div class="mb-5 bg-white rounded-2xl border border-red-200 shadow-sm overflow-hidden">
             <div class="flex items-center gap-3 px-5 py-3 border-b border-red-100" style="background:#FFF1F2;">
-                <div class="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
-                     style="background:#FEE2E2;">
+                <div class="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#FEE2E2;">
                     <svg class="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                     </svg>
@@ -93,58 +78,43 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.sports_venues.update', $venue) }}" method="POST"
-          novalidate id="form-editar-venue">
+    <form action="{{ route('admin.foundations.update', $foundation) }}" method="POST" novalidate id="form-edit">
         @csrf
         @method('PUT')
-        @include('admin.sports_venues._form')
+        @include('admin.foundations._form')
 
-        {{-- Botones --}}
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <button type="submit"
                     class="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold
-                           text-white rounded-xl shadow-md transition-all
-                           hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
-                    style="background: linear-gradient(135deg, #7c2d12, #ea580c);">
+                           text-white rounded-xl shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+                    style="background: linear-gradient(135deg, #065f46, #059669);">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                 </svg>
-                Actualizar Escenario
+                Guardar Cambios
             </button>
-            <a href="{{ route('admin.sports_venues.index') }}"
+            <a href="{{ route('admin.foundations.index') }}"
                class="inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold
-                      rounded-xl border border-slate-200 text-slate-600 bg-white
-                      hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
+                      text-slate-600 bg-white rounded-xl border border-slate-200 hover:bg-slate-50 transition-all">
                 Cancelar
             </a>
         </div>
     </form>
+
 </div>
 
 @push('scripts')
 <script>
-// Alerta de cambios no guardados
-(function () {
-    var form    = document.getElementById('form-editar-venue');
+(function() {
+    var form    = document.getElementById('form-edit');
     var alert   = document.getElementById('unsaved-alert');
     var changed = false;
-    var submitted = false;
-
-    if (!form || !alert) return;
-
-    form.addEventListener('input',  function() { if (!changed) { changed = true; alert.classList.remove('hidden'); } });
-    form.addEventListener('change', function() { if (!changed) { changed = true; alert.classList.remove('hidden'); } });
-    form.addEventListener('submit', function() { submitted = true; });
-
-    window.addEventListener('beforeunload', function(e) {
-        if (changed && !submitted) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
-    });
+    if (form) {
+        form.addEventListener('input', function() {
+            if (!changed) { changed = true; alert.classList.remove('hidden'); }
+        });
+        form.addEventListener('submit', function() { changed = false; alert.classList.add('hidden'); });
+    }
 })();
 </script>
 @endpush

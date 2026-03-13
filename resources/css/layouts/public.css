@@ -1,137 +1,245 @@
-/* ═══════════════════════════════════════════════════════
-   resources/css/layouts/public.css
-   Layout público – Navbar + Page Body (responsive)
-   ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   SIRN — LAYOUT PUBLIC  |  Navbar + Page body
+   Paleta: Navy #0D2149 · Blue #1E3A8A · Cyan #00B4D8
+   ═══════════════════════════════════════════════════════════════ */
 
-/* ── Variables ── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap');
+
+/* ── Variables globales (comparte con mapa/index.css) ─────────── */
 :root {
-    --nav-h: 56px;       /* altura del navbar */
-    --color-primary: #1E3A8A;
-    --color-primary-dark: #172E73;
-    --font-heading: 'DM Serif Display', serif;
-    --font-body: 'DM Sans', sans-serif;
+  --c-navy:        #0D2149;
+  --c-navy-mid:    #1E3A8A;
+  --c-blue:        #1D62C1;
+  --c-cyan:        #00B4D8;
+  --c-cyan-light:  #90E0EF;
+  --c-cyan-pale:   #CAF0F8;
+  --c-accent:      #F59E0B;
+  --c-success:     #10B981;
+  --c-danger:      #EF4444;
+
+  --c-bg:          #F0F4FA;
+  --c-surface:     #FFFFFF;
+  --c-surface2:    #F7FAFF;
+  --c-border:      rgba(30,58,138,.10);
+  --c-border2:     rgba(30,58,138,.18);
+
+  --c-text:        #0D2149;
+  --c-text2:       #3B5280;
+  --c-text3:       #7E94BA;
+
+  --nav-h:         58px;
+  --font:          'DM Sans', system-ui, sans-serif;
+  --font-num:      'Space Grotesk', system-ui, sans-serif;
+
+  --shadow-sm:  0 1px 4px rgba(13,33,73,.08);
+  --shadow-md:  0 4px 16px rgba(13,33,73,.12);
+  --shadow-lg:  0 8px 32px rgba(13,33,73,.18);
 }
 
-/* ── Reset base ── */
-*, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+/* ── Reset mínimo ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body {
-    height: 100%;
-    overflow: hidden; /* el scroll se controla dentro del page-body */
+  margin: 0; padding: 0;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-    font-family: var(--font-body);
-    -webkit-font-smoothing: antialiased;
-}
-
-/* ══════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════
    NAVBAR
-══════════════════════════════════════ */
+   ══════════════════════════════════════════════════════════════════ */
 .sirn-nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: var(--nav-h);
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-    z-index: 1000;
-    flex-shrink: 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, .2);
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 2000;
+  height: var(--nav-h);
+
+  /* Gradiente diagonal — refleja la portada corporativa */
+  background: linear-gradient(
+    105deg,
+    var(--c-navy) 0%,
+    #152D6E 45%,
+    var(--c-blue) 100%
+  );
+
+  /* Franja diagonal decorativa (efecto portada) */
+  overflow: hidden;
+  box-shadow: 0 2px 20px rgba(0,0,0,.28);
 }
 
+/* Líneas diagonales decorativas (background-image overlay) */
+.sirn-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg,
+      transparent 55%,
+      rgba(0,180,216,.18) 55%,
+      rgba(0,180,216,.08) 68%,
+      transparent 68%
+    ),
+    linear-gradient(115deg,
+      transparent 62%,
+      rgba(144,224,239,.10) 62%,
+      rgba(144,224,239,.04) 72%,
+      transparent 72%
+    );
+  pointer-events: none;
+}
+
+/* ── Logo / Marca ─────────────────────────────────────────────── */
 .nav-brand-name {
-    font-family: var(--font-heading);
-    font-size: 1.15rem;
-    color: white;
-    font-weight: 700;
-    line-height: 1.1;
+  font-family: var(--font-num);
+  font-size: 17px;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: .04em;
+  line-height: 1;
 }
+
 .nav-brand-sub {
-    font-size: .65rem;
-    color: rgba(255, 255, 255, .65);
-    letter-spacing: .03em;
+  font-size: 9.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,.52);
+  letter-spacing: .03em;
+  line-height: 1;
+  margin-top: 3px;
+  white-space: nowrap;
 }
 
-/* Badge centro */
+/* ── Badge municipio (centro) ──────────────────────────────────── */
 .nav-badge {
-    display: none;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 14px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, .12);
-    color: rgba(255, 255, 255, .8);
-    font-size: .7rem;
-    font-weight: 600;
-    white-space: nowrap;
-}
-@media (min-width: 768px) {
-    .nav-badge { display: flex; }
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 99px;
+  padding: 5px 13px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,.75);
+  letter-spacing: .02em;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
 }
 
+/* Punto "online" pulsante */
 .online-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #34D399;
-    flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-cyan);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(0,180,216,.5);
+  animation: ping 2.2s ease-in-out infinite;
+}
+@keyframes ping {
+  0%   { box-shadow: 0 0 0 0 rgba(0,180,216,.5); }
+  60%  { box-shadow: 0 0 0 5px rgba(0,180,216,.0); }
+  100% { box-shadow: 0 0 0 0 rgba(0,180,216,.0); }
 }
 
-/* Botones navbar */
+/* ── Divisor vertical ─────────────────────────────────────────── */
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,.18);
+  flex-shrink: 0;
+}
+
+/* ── Botón "Panel Admin" ─────────────────────────────────────── */
 .btn-admin {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    background: white;
-    color: var(--color-primary);
-    font-size: .72rem;
-    font-weight: 700;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  background: var(--c-cyan);
+  color: var(--c-navy);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  text-decoration: none;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  transition: background .18s, transform .12s, box-shadow .18s;
+  box-shadow: 0 2px 12px rgba(0,180,216,.35);
+  position: relative; z-index: 1;
 }
 .btn-admin:hover {
-    background: #EFF6FF;
-    transform: translateY(-1px);
+  background: #00CCF5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(0,180,216,.45);
+}
+.btn-admin:active {
+  transform: translateY(0);
 }
 
+/* ── Link "Acceso Admin" (visitante) ───────────────────────────── */
 .link-login {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border: 1px solid rgba(255, 255, 255, .3);
-    color: white;
-    font-size: .72rem;
-    font-weight: 600;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.20);
+  color: rgba(255,255,255,.85);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .18s, border-color .18s, color .18s, transform .12s;
+  position: relative; z-index: 1;
 }
 .link-login:hover {
-    background: rgba(255, 255, 255, .1);
+  background: rgba(255,255,255,.18);
+  border-color: rgba(255,255,255,.35);
+  color: white;
+  transform: translateY(-1px);
+}
+.link-login:active { transform: translateY(0); }
+
+/* ── Nombre de usuario autenticado ─────────────────────────────── */
+.nav-user-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(144,224,239,.85);
+  font-family: var(--font);
 }
 
-.nav-divider {
-    width: 1px;
-    height: 20px;
-    background: rgba(255, 255, 255, .2);
-}
-
-/* ══════════════════════════════════════
-   PAGE BODY
-   Ocupa todo el viewport debajo del nav
-══════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   PAGE BODY  — empuja el contenido debajo del nav
+   ══════════════════════════════════════════════════════════════════ */
 .page-body {
-    position: fixed;
-    top: var(--nav-h);
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: hidden;
+  padding-top: var(--nav-h);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* En páginas con mapa (fixed layout), el page-body no agrega padding
+   porque todos los elementos del mapa usan position: fixed con top calculado */
+
+/* ══════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  :root { --nav-h: 52px; }
+
+  .nav-badge { display: none; }
+
+  .nav-brand-name { font-size: 15px; }
+}
+
+@media (max-width: 380px) {
+  .btn-admin, .link-login {
+    padding: 6px 11px;
+    font-size: 11px;
+  }
 }

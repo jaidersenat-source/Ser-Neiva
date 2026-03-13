@@ -131,9 +131,15 @@ class IglesiaController extends Controller
     }
 
     public function import()
-{
-    return view('admin.iglesias.import');
-}
+    {
+        return view('admin.iglesias.import');
+    }
+
+    public function importTemplate()
+    {
+        $path = public_path('templates/plantilla_importacion_iglesias.xlsx');
+        return response()->download($path, 'plantilla_importacion_iglesias.xlsx');
+    }
 
 public function importStore(Request $request)
 {

@@ -63,6 +63,8 @@ class IglesiaRequest extends FormRequest
             'ministries'            => ['nullable', 'array'],
             'ministries.*'          => ['string'],
             'additional_notes'      => ['nullable', 'string', 'max:3000'],
+            'schedule_weekdays'     => ['nullable', 'string', 'max:100'],
+            'schedule_weekends'     => ['nullable', 'string', 'max:100'],
 
             // ── Geolocalización ───────────────────────────────
             'latitud'  => ['required', 'numeric', 'between:-90,90'],

@@ -43,6 +43,7 @@ class IglesiaApiController extends Controller
                 'email', 'correo_institucional',
                 'celular_institucional', 'photo',
                 'fecha_nacimiento_lider', 'pastor_birth_date',
+                'schedule_weekdays', 'schedule_weekends',
             ])
             ->get()
             ->map(fn($i) => [
@@ -56,10 +57,11 @@ class IglesiaApiController extends Controller
                 'latitud'                => (float) $i->latitud,
                 'longitud'               => (float) $i->longitud,
                 'pastor_sacerdote'       => $i->pastor_full_name ?: $i->pastor_sacerdote,
-                'telefono'               => $i->phone_mobile    ?: $i->phone_landline ?: $i->telefono,
+                'telefono'               => $i->phone_landline  ?: $i->phone_mobile ?: $i->telefono,
                 'celular_institucional'  => $i->phone_mobile    ?: $i->celular_institucional,
-                'email'                  => $i->email           ?: $i->correo_institucional,
-                'correo_institucional'   => $i->email           ?: $i->correo_institucional,
+                'correo_institucional'   => $i->correo_institucional ?: $i->email,
+                'schedule_weekdays'      => $i->schedule_weekdays,
+                'schedule_weekends'      => $i->schedule_weekends,
                 'foto_url'               => $i->photo ? asset('storage/' . $i->photo) : null,
                 'fecha_nacimiento_lider' => $i->fecha_nacimiento_lider
                     ? $i->fecha_nacimiento_lider->format('Y-m-d')
