@@ -282,8 +282,8 @@
                         data-comuna="{{ strtolower($iglesia->specific_location ?? $iglesia->comuna ?? '') }}"
                         data-municipality="{{ strtolower($iglesia->municipality ?? '') }}"
                         data-ayudas="{{ implode(',', $iglesia->ayudas->pluck('id')->toArray()) }}"
-                        data-juridico="{{ strtolower(implode(' ', array_filter([$iglesia->legal_registration_type, $iglesia->legal_registration_number, $iglesia->legal_entity_granting, $iglesia->legal_personality_type, $iglesia->entidad_registrada_colombia]))) }}"
-                        data-tiene-juridico="{{ ($iglesia->entidad_registrada_colombia === 'SI' || !empty($iglesia->legal_registration_type) || !empty($iglesia->legal_registration_number)) ? '1' : '0' }}">
+                        data-juridico="{{ strtolower(implode(' ', array_filter([$iglesia->legal_registration_type, $iglesia->legal_registration_number, $iglesia->legal_entity_granting, $iglesia->legal_personality_type]))) }}"
+                        data-tiene-juridico="{{ (!empty($iglesia->legal_registration_type) || !empty($iglesia->legal_registration_number)) ? '1' : '0' }}">
 
                         {{-- Nombre + dirección --}}
                         <td class="px-6 py-4">
@@ -442,8 +442,8 @@
                  data-pastor="{{ strtolower($iglesia->pastor_full_name ?? '') }}"
                  data-comuna="{{ strtolower($iglesia->specific_location ?? $iglesia->comuna ?? '') }}"
                  data-ayudas="{{ implode(',', $iglesia->ayudas->pluck('id')->toArray()) }}"
-                 data-juridico="{{ strtolower(implode(' ', array_filter([$iglesia->legal_registration_type, $iglesia->legal_registration_number, $iglesia->legal_entity_granting, $iglesia->legal_personality_type, $iglesia->entidad_registrada_colombia]))) }}"
-                 data-tiene-juridico="{{ ($iglesia->entidad_registrada_colombia === 'SI' || !empty($iglesia->legal_registration_type) || !empty($iglesia->legal_registration_number)) ? '1' : '0' }}">
+                 data-juridico="{{ strtolower(implode(' ', array_filter([$iglesia->legal_registration_type, $iglesia->legal_registration_number, $iglesia->legal_entity_granting, $iglesia->legal_personality_type]))) }}"
+                 data-tiene-juridico="{{ (!empty($iglesia->legal_registration_type) || !empty($iglesia->legal_registration_number)) ? '1' : '0' }}">
 
                 {{-- Header --}}
                 <div class="flex items-start gap-3 mb-3">

@@ -81,7 +81,7 @@
 
             {{-- Body --}}
             <div class="email-body">
-                <p class="greeting">Hola <strong>{{ $iglesia->pastor_full_name ?: ($iglesia->pastor_sacerdote ?: ($iglesia->official_name ?: $iglesia->nombre)) }}</strong>,</p>
+                <p class="greeting">Hola <strong>{{ $iglesia->pastor_full_name ?: $iglesia->official_name }}</strong>,</p>
 
                 {!! $campaign->message !!}
             </div>

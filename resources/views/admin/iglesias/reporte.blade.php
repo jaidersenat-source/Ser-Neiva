@@ -213,12 +213,12 @@
             <div class="stat-lbl">Inactivas</div>
         </td>
         <td class="stat-cell stat-amber">
-            <div class="stat-num">{{ $iglesias->map(fn($i) => $i->denomination ?? $i->denominacion)->filter()->unique()->count() }}</div>
+            <div class="stat-num">{{ $iglesias->pluck('denomination')->filter()->unique()->count() }}</div>
             <div class="stat-lbl">Denominaciones</div>
         </td>
         <td class="stat-cell stat-purple">
-            <div class="stat-num">{{ $iglesias->filter(fn($i) => $i->entidad_registrada_colombia === 'SI')->count() }}</div>
-            <div class="stat-lbl">Reg. Colombia</div>
+            <div class="stat-num">{{ $iglesias->filter(fn($i) => !empty($i->legal_registration_number))->count() }}</div>
+            <div class="stat-lbl">Reg. Legal</div>
         </td>
     </tr>
 </table>
@@ -231,12 +231,12 @@
 {{-- ── Fichas por iglesia ── --}}
 @forelse($iglesias as $iglesia)
 @php
-    $nombre     = $iglesia->official_name ?? $iglesia->nombre ?? '—';
-    $denom      = $iglesia->denomination  ?? $iglesia->denominacion ?? '—';
-    $dir        = $iglesia->address       ?? $iglesia->direccion ?? '—';
-    $pastor     = $iglesia->pastor_full_name ?? $iglesia->pastor_sacerdote ?? null;
-    $tel        = $iglesia->phone_mobile  ?? $iglesia->phone_landline ?? $iglesia->telefono ?? null;
-    $correo     = $iglesia->correo_institucional ?? $iglesia->email ?? null;
+    $nombre     = $iglesia->official_name ?? '—';
+    $denom      = $iglesia->denomination ?? '—';
+    $dir        = $iglesia->address ?? '—';
+    $pastor     = $iglesia->pastor_full_name ?? null;
+    $tel        = $iglesia->phone_mobile ?? $iglesia->phone_landline ?? null;
+    $correo     = $iglesia->email ?? null;
     $ubicacion  = $iglesia->specific_location ?? $iglesia->comuna ?? null;
 @endphp
 
@@ -249,13 +249,10 @@
                 <td style="width:26px;"><div class="card-num">{{ $loop->iteration }}</div></td>
                 <td>
                     <div class="card-title">{{ $nombre }}</div>
-                    @if($iglesia->official_name && $iglesia->nombre && $iglesia->official_name !== $iglesia->nombre)
-                        <div class="card-subtitle">Legacy: {{ $iglesia->nombre }}</div>
-                    @endif
                 </td>
                 <td style="text-align:right; white-space:nowrap;">
-                    <span class="badge {{ $iglesia->estado === 'activo' ? 'b-activo' : 'b-inactivo' }}">
-                        {{ $iglesia->estado === 'activo' ? 'Activa' : 'Inactiva' }}
+                    <span class="badge {{ $iglesia->church_status === 'Active' ? 'b-activo' : 'b-inactivo' }}">
+                        {{ $iglesia->church_status === 'Active' ? 'Activa' : 'Inactiva' }}
                     </span>
                     &nbsp;
                     @if($iglesia->church_status)
@@ -291,7 +288,7 @@
                     <div class="field-val">{{ \Carbon\Carbon::parse($iglesia->foundation_date)->format('d/m/Y') }}</div>
                 </div>
                 @endif
-                @php $miembros = $iglesia->approx_members ?? $iglesia->promedio_asistentes; @endphp
+                @php $miembros = $iglesia->approx_members; @endphp
                 @if($miembros)
                 <div class="field">
                     <div class="field-label">Aprox. Miembros</div>
@@ -304,10 +301,10 @@
                     <div class="field-val">{{ $iglesia->website_or_social }}</div>
                 </div>
                 @endif
-                @if($iglesia->descripcion)
+                @if($iglesia->additional_notes)
                 <div class="field">
-                    <div class="field-label">Descripcion</div>
-                    <div class="field-val">{{ \Illuminate\Support\Str::limit($iglesia->descripcion, 80) }}</div>
+                    <div class="field-label">Observaciones</div>
+                    <div class="field-val">{{ \Illuminate\Support\Str::limit($iglesia->additional_notes, 80) }}</div>
                 </div>
                 @endif
             </td>
@@ -378,11 +375,11 @@
                     <div class="field-val">{{ $iglesia->pastor_document_type }} {{ $iglesia->pastor_document_number }}</div>
                 </div>
                 @endif
-                @if($iglesia->pastor_birth_date ?? $iglesia->fecha_nacimiento_lider)
+                @if($iglesia->pastor_birth_date)
                 <div class="field">
                     <div class="field-label">Fecha Nacimiento</div>
-                    <div class="field-val">{{ \Carbon\Carbon::parse($iglesia->pastor_birth_date ?? $iglesia->fecha_nacimiento_lider)->format('d/m/Y') }}
-                        @php $edad = $iglesia->pastor_birth_date ? \Carbon\Carbon::parse($iglesia->pastor_birth_date)->age : $iglesia->edad_lider; @endphp
+                    <div class="field-val">{{ \Carbon\Carbon::parse($iglesia->pastor_birth_date)->format('d/m/Y') }}
+                        @php $edad = \Carbon\Carbon::parse($iglesia->pastor_birth_date)->age; @endphp
                         @if($edad) <span style="color:#64748B;">({{ $edad }} años)</span> @endif
                     </div>
                 </div>
@@ -393,10 +390,10 @@
                     <div class="field-val">{{ $iglesia->leadership_period_type }}</div>
                 </div>
                 @endif
-                @if($iglesia->pastor_phone ?? $iglesia->telefono)
+                @if($iglesia->pastor_phone)
                 <div class="field">
                     <div class="field-label">Telefono Pastor</div>
-                    <div class="field-val">{{ $iglesia->pastor_phone ?? $iglesia->telefono }}</div>
+                    <div class="field-val">{{ $iglesia->pastor_phone }}</div>
                 </div>
                 @endif
                 @if($iglesia->pastor_email)
@@ -703,7 +700,7 @@
             <div class="stat-lbl">Inactivas</div>
         </td>
         <td class="stat-cell stat-amber">
-            <div class="stat-num">{{ $iglesias->map(fn($i) => $i->denomination ?? $i->denominacion)->filter()->unique()->count() }}</div>
+            <div class="stat-num">{{ $iglesias->pluck('denomination')->filter()->unique()->count() }}</div>
             <div class="stat-lbl">Denominaciones</div>
         </td>
     </tr>
@@ -737,8 +734,8 @@
 
             <td>
                 @php
-                    $nombrePdf   = $iglesia->official_name ?? $iglesia->nombre;
-                    $correoPdf   = $iglesia->correo_institucional ?? $iglesia->email;
+                    $nombrePdf   = $iglesia->official_name;
+                    $correoPdf   = $iglesia->email;
                 @endphp
                 <strong>{{ $nombrePdf }}</strong>
                 @if($correoPdf)
@@ -746,11 +743,10 @@
                 @endif
             </td>
 
-            <td>{{ $iglesia->denomination ?? $iglesia->denominacion ?? '—' }}</td>
+            <td>{{ $iglesia->denomination ?? '—' }}</td>
 
             <td style="font-size:7.5px;">
-                @php $dir = $iglesia->address ?? $iglesia->direccion; @endphp
-                {{ $dir ?? '—' }}
+                {{ $iglesia->address ?? '—' }}
                 @if($iglesia->neighborhood)
                     <br><span style="color:#94A3B8;">{{ $iglesia->neighborhood }}</span>
                 @endif
@@ -760,16 +756,16 @@
 
             <td class="c" style="font-size:7.5px;">{{ $iglesia->specific_location ?? $iglesia->comuna ?? '—' }}</td>
 
-            <td>{{ $iglesia->pastor_full_name ?? $iglesia->pastor_sacerdote ?? '—' }}</td>
+            <td>{{ $iglesia->pastor_full_name ?? '—' }}</td>
 
             <td class="c">
-                @php $tel = $iglesia->phone_mobile ?? $iglesia->phone_landline ?? $iglesia->telefono; @endphp
+                @php $tel = $iglesia->phone_mobile ?? $iglesia->phone_landline; @endphp
                 {{ $tel ?? '—' }}
             </td>
 
             <td class="c">
-                <span class="badge {{ $iglesia->estado === 'activo' ? 'b-activo' : 'b-inactivo' }}">
-                    {{ $iglesia->estado === 'activo' ? 'Activa' : 'Inactiva' }}
+                <span class="badge {{ $iglesia->church_status === 'Active' ? 'b-activo' : 'b-inactivo' }}">
+                    {{ $iglesia->church_status === 'Active' ? 'Activa' : 'Inactiva' }}
                 </span>
             </td>
 

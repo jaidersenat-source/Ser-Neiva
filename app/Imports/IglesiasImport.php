@@ -36,53 +36,41 @@ class IglesiasImport implements ToCollection, WithHeadingRow, WithMultipleSheets
         $rules = [
             // Identificadores principales
             'official_name'              => 'required|string|max:200',
-            'nombre'                     => 'nullable|string|max:200',
             // Información general
             'denomination'               => 'nullable|string|max:50',
-            'denominacion'               => 'nullable|string|max:150',
             'confessional_character'     => 'nullable|string|max:50',
-            'church_status'              => 'nullable|string|max:50',
-            'estado'                     => 'required|in:activo,inactivo',
+            'church_status'              => 'required|string|max:50',
             'specific_location'          => 'nullable|string|max:255',
             'foundation_date'            => 'nullable|date',
             'approx_members'             => 'nullable|integer|min:0',
-            'promedio_asistentes'        => 'nullable|integer|min:0',
             // Ubicación
             'address'                    => 'nullable|string|max:255',
-            'direccion'                  => 'nullable|string|max:255',
             'neighborhood'               => 'nullable|string|max:100',
             'municipality'               => 'nullable|string|max:100',
+            'comuna'                     => 'nullable|string|max:100',
             'city'                       => 'nullable|string|max:100',
             'department'                 => 'nullable|string|max:100',
             'country'                    => 'nullable|string|max:80',
-            'corregimiento'              => 'nullable|string|max:100',
-            'comuna'                     => 'nullable|string|max:100',
             'latitud'                    => 'nullable|numeric',
             'longitud'                   => 'nullable|numeric',
-            // Contacto (sin DNS check para evitar falsos negativos)
+            // Contacto
+            'email'                      => 'nullable|email|max:150',
             'phone_landline'             => 'nullable|string|max:20',
             'phone_mobile'               => 'nullable|string|max:20',
-            'celular_institucional'      => 'nullable|string|max:20',
             'website_or_social'          => 'nullable|string|max:255',
-            'correo_institucional'       => 'nullable|email|max:150',
-            'email'                      => 'nullable|email|max:150',
             // Pastor principal
             'pastor_full_name'           => 'nullable|string|max:150',
-            'pastor_sacerdote'           => 'nullable|string|max:150',
             'pastor_document_type'       => 'nullable|string|max:20',
             'pastor_document_number'     => 'nullable|string|max:30',
             'pastor_birth_date'          => 'nullable|date',
-            'fecha_nacimiento_lider'     => 'nullable|date',
             'leadership_period_type'     => 'nullable|string|max:30',
             'pastor_phone'               => 'nullable|string|max:20',
-            'telefono'                   => 'nullable|string|max:20',
             'pastor_email'               => 'nullable|email|max:150',
             // Líder de mujeres
             'women_leader_full_name'     => 'nullable|string|max:150',
             'women_leader_phone'         => 'nullable|string|max:20',
             'women_leader_email'         => 'nullable|email|max:150',
             // Datos jurídicos
-            'entidad_registrada_colombia'=> 'nullable|in:SI,NO,EN_PROCESO',
             'legal_registration_type'    => 'nullable|string|max:80',
             'legal_registration_number'  => 'nullable|string|max:50',
             'legal_entity_granting'      => 'nullable|string|max:200',
@@ -94,7 +82,6 @@ class IglesiasImport implements ToCollection, WithHeadingRow, WithMultipleSheets
             // Programas y notas
             'ministries'                 => 'nullable|string',
             'additional_notes'           => 'nullable|string|max:2000',
-            'descripcion'                => 'nullable|string|max:2000',
             'photo'                      => 'nullable|string|max:500',
         ];
 
@@ -124,15 +111,16 @@ class IglesiasImport implements ToCollection, WithHeadingRow, WithMultipleSheets
                 else $data['pastor_document_type'] = substr($dt, 0, 20);
             }
 
-            // entidad_registrada_colombia: normalizar a mayúsculas; si no coincide, null
-            if (isset($data['entidad_registrada_colombia'])) {
-                $erc = strtoupper(trim((string)$data['entidad_registrada_colombia']));
-                $data['entidad_registrada_colombia'] = in_array($erc, ['SI', 'NO', 'EN_PROCESO']) ? $erc : null;
-            }
-
-            // estado: normalizar a minúsculas (por si viene "Activo" → "activo")
-            if (!empty($data['estado'])) {
-                $data['estado'] = strtolower(trim((string)$data['estado']));
+            // church_status: normalizar a Title Case
+            if (!empty($data['church_status'])) {
+                $cs = strtolower(trim((string)$data['church_status']));
+                // Mapear variantes comunes
+                $data['church_status'] = match($cs) {
+                    'activo', 'active', 'activa' => 'Active',
+                    'inactivo', 'inactive', 'inactiva' => 'Inactive',
+                    'suspended', 'suspendido', 'suspendida' => 'Suspended',
+                    default => ucfirst($cs),
+                };
             }
 
             // leadership_period_type: normalizar a Title Case para coincidir con BD
@@ -146,8 +134,8 @@ class IglesiasImport implements ToCollection, WithHeadingRow, WithMultipleSheets
             if ($validator->fails()) {
                 $this->errors[] = [
                     'row'       => $rowNumber,
-                    'nombre'    => $data['official_name'] ?? ($data['nombre'] ?? 'N/A'),
-                    'direccion' => $data['address'] ?? ($data['direccion'] ?? 'N/A'),
+                    'nombre'    => $data['official_name'] ?? 'N/A',
+                    'direccion' => $data['address'] ?? 'N/A',
                     'errors'    => $validator->errors()->all(),
                 ];
                 continue;
@@ -162,29 +150,6 @@ class IglesiasImport implements ToCollection, WithHeadingRow, WithMultipleSheets
                 Iglesia::whereRaw('LOWER(official_name) = ?', [$keyNorm])->exists()) {
                 $this->skipped++;
                 continue;
-            }
-
-            // Propagar campos legacy desde los nuevos alias si están vacíos
-            if (empty($validated['nombre'])) {
-                $validated['nombre'] = $validated['official_name'];
-            }
-            if (empty($validated['direccion']) && !empty($validated['address'])) {
-                $validated['direccion'] = $validated['address'];
-            }
-            if (empty($validated['denominacion']) && !empty($validated['denomination'])) {
-                $validated['denominacion'] = $validated['denomination'];
-            }
-            if (empty($validated['pastor_sacerdote']) && !empty($validated['pastor_full_name'])) {
-                $validated['pastor_sacerdote'] = $validated['pastor_full_name'];
-            }
-            if (empty($validated['telefono']) && !empty($validated['pastor_phone'])) {
-                $validated['telefono'] = $validated['pastor_phone'];
-            }
-            if (empty($validated['celular_institucional']) && !empty($validated['phone_mobile'])) {
-                $validated['celular_institucional'] = $validated['phone_mobile'];
-            }
-            if (empty($validated['correo_institucional']) && !empty($validated['email'])) {
-                $validated['correo_institucional'] = $validated['email'];
             }
 
             // Parsear ministries como JSON si viene como string

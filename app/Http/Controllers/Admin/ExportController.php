@@ -22,10 +22,10 @@ class ExportController extends Controller
         $query = Iglesia::with('ayudas')->latest();
 
         if ($request->filled('estado'))
-            $query->where('estado', $request->estado);
+            $query->where('church_status', $request->estado);
 
         if ($request->filled('denominacion'))
-            $query->where('denominacion', $request->denominacion);
+            $query->where('denomination', $request->denominacion);
 
         if ($request->filled('comuna'))
             $query->where('comuna', $request->comuna);
@@ -47,8 +47,8 @@ class ExportController extends Controller
         $pdf = Pdf::loadView('admin.exports.iglesias-pdf', [
             'iglesias'  => $iglesias,
             'total'     => $iglesias->count(),
-            'activas'   => $iglesias->where('estado', 'activo')->count(),
-            'inactivas' => $iglesias->where('estado', 'inactivo')->count(),
+            'activas'   => $iglesias->where('church_status', 'Active')->count(),
+            'inactivas' => $iglesias->where('church_status', 'Inactive')->count(),
             'filtros'   => $this->describeFiltros($request),
             'fecha'     => now()->translatedFormat('d \d\e F \d\e Y'),
             'hora'      => now()->format('H:i'),

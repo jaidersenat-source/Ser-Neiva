@@ -11,34 +11,41 @@ class DashboardController extends Controller
 {
     public function index(): View
     {
-        // ── Stats generales ──────────────────────────────────
-        $stats = [
-            'total'          => Iglesia::count(),
-            'activas'        => Iglesia::where('church_status', 'Activo')->count(),
-            'inactivas'      => Iglesia::where('church_status', 'Inactivo')->count(),
-            'denominaciones' => Iglesia::distinct('denomination')->count('denomination'),
+        // ── Stats generales + tamaños en 1 solo query ────────
+        $raw = Iglesia::selectRaw("
+            COUNT(*) as total,
+            SUM(CASE WHEN church_status = 'Active' THEN 1 ELSE 0 END) as activas,
+            SUM(CASE WHEN church_status = 'Inactive' THEN 1 ELSE 0 END) as inactivas,
+            COUNT(DISTINCT denomination) as denominaciones,
+            SUM(CASE WHEN church_status = 'Active' AND approx_members IS NOT NULL THEN approx_members ELSE 0 END) as total_asistentes,
+            AVG(CASE WHEN church_status = 'Active' AND approx_members IS NOT NULL THEN approx_members END) as promedio_global,
+            SUM(CASE WHEN approx_members IS NOT NULL THEN 1 ELSE 0 END) as con_asistentes,
+            SUM(CASE WHEN church_status = 'Active' AND approx_members BETWEEN 1 AND 49 THEN 1 ELSE 0 END) as pequena,
+            SUM(CASE WHEN church_status = 'Active' AND approx_members BETWEEN 50 AND 200 THEN 1 ELSE 0 END) as mediana,
+            SUM(CASE WHEN church_status = 'Active' AND approx_members > 200 THEN 1 ELSE 0 END) as grande,
+            SUM(CASE WHEN church_status = 'Active' AND approx_members IS NULL THEN 1 ELSE 0 END) as sin_dato
+        ")->first();
 
-            // Asistentes
-            'total_asistentes' => (int) Iglesia::where('church_status', 'Activo')
-                                        ->whereNotNull('approx_members')
-                                        ->sum('approx_members'),
-            'promedio_global'  => (int) Iglesia::where('church_status', 'Activo')
-                                        ->whereNotNull('approx_members')
-                                        ->avg('approx_members'),
-            'con_asistentes'   => Iglesia::whereNotNull('approx_members')->count(),
+        $stats = [
+            'total'            => (int) $raw->total,
+            'activas'          => (int) $raw->activas,
+            'inactivas'        => (int) $raw->inactivas,
+            'denominaciones'   => (int) $raw->denominaciones,
+            'total_asistentes' => (int) $raw->total_asistentes,
+            'promedio_global'  => (int) $raw->promedio_global,
+            'con_asistentes'   => (int) $raw->con_asistentes,
         ];
 
-        // ── Clasificación por tamaño de congregación ─────────
         $tamanos = [
-            'pequeña'  => Iglesia::where('church_status', 'Activo')->whereBetween('approx_members', [1, 49])->count(),
-            'mediana'  => Iglesia::where('church_status', 'Activo')->whereBetween('approx_members', [50, 200])->count(),
-            'grande'   => Iglesia::where('church_status', 'Activo')->where('approx_members', '>', 200)->count(),
-            'sin_dato' => Iglesia::where('church_status', 'Activo')->whereNull('approx_members')->count(),
+            'pequeña'  => (int) $raw->pequena,
+            'mediana'  => (int) $raw->mediana,
+            'grande'   => (int) $raw->grande,
+            'sin_dato' => (int) $raw->sin_dato,
         ];
 
         // ── Top 5 iglesias por asistentes ────────────────────
         $topIglesias = Iglesia::select('id', 'official_name', 'denomination', 'approx_members')
-            ->where('church_status', 'Activo')
+            ->where('church_status', 'Active')
             ->whereNotNull('approx_members')
             ->orderByDesc('approx_members')
             ->take(5)
@@ -52,7 +59,7 @@ class DashboardController extends Controller
 
         // ── Por denominación ──────────────────────────────────
         $porDenominacion = Iglesia::select('denomination', DB::raw('count(*) as total'))
-            ->where('church_status', 'Activo')
+            ->where('church_status', 'Active')
             ->groupBy('denomination')
             ->orderByDesc('total')
             ->take(6)

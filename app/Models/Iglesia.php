@@ -13,12 +13,6 @@ class Iglesia extends Model
     protected $table = 'iglesias';
 
     protected $fillable = [
-        // ── Campos heredados (compatibilidad) ──────────────────────────────
-        'nombre', 'denominacion', 'direccion', 'comuna', 'corregimiento',
-        'estado', 'celular_institucional', 'correo_institucional',
-        'entidad_registrada_colombia', 'promedio_asistentes',
-        'pastor_sacerdote', 'fecha_nacimiento_lider', 'telefono',
-        'email', 'descripcion',
         // ── Sección 1: Información de la Iglesia ──────────────────────
         'official_name',
         'denomination',
@@ -29,10 +23,15 @@ class Iglesia extends Model
         'approx_members',
         // ── Sección 2: Ubicación ─────────────────────────────────────
         'address',
-        'neighborhood',        'municipality',        'city',
+        'neighborhood',
+        'municipality',
+        'comuna',
+        'city',
         'department',
         'country',
         // ── Sección 3: Contacto ─────────────────────────────────────
+        'email',
+        'correo_institucional',
         'phone_landline',
         'phone_mobile',
         'website_or_social',
@@ -72,32 +71,14 @@ class Iglesia extends Model
     protected $casts = [
         'latitud'                => 'float',
         'longitud'               => 'float',
-        'promedio_asistentes'    => 'integer',
         'approx_members'         => 'integer',
-        'fecha_nacimiento_lider' => 'date',
         'foundation_date'        => 'date',
         'pastor_birth_date'      => 'date',
         'resolution_date'        => 'date',
         'ministries'             => 'array',
     ];
 
-    protected static function booted(): void
-    {
-        static::saving(function (Iglesia $iglesia) {
-            // Sincronizar church_status ↔ estado
-            if ($iglesia->isDirty('estado') && !$iglesia->isDirty('church_status')) {
-                $iglesia->church_status = $iglesia->estado === 'activo' ? 'Activo' : 'Inactivo';
-            } elseif ($iglesia->isDirty('church_status') && !$iglesia->isDirty('estado')) {
-                $iglesia->estado = $iglesia->church_status === 'Activo' ? 'activo' : 'inactivo';
-            }
-            // Si church_status es null pero estado tiene valor
-            if (is_null($iglesia->church_status) && $iglesia->estado) {
-                $iglesia->church_status = $iglesia->estado === 'activo' ? 'Activo' : 'Inactivo';
-            }
-        });
-    }
-
-       public const ENTIDAD_OPCIONES = [
+    public const ENTIDAD_OPCIONES = [
         'SI'         => 'Sí, registrada',
         'NO'         => 'No registrada',
         'EN_PROCESO' => 'En proceso',
@@ -106,7 +87,7 @@ class Iglesia extends Model
     // ── Scopes ────────────────────────────────────────────────
     public function scopeActivas($query)
     {
-        return $query->where('estado', 'activo');
+        return $query->where('church_status', 'Active');
     }
 
      /**
@@ -115,22 +96,14 @@ class Iglesia extends Model
      */
     public function getEdadLiderAttribute(): ?int
     {
-        return $this->fecha_nacimiento_lider
-            ? $this->fecha_nacimiento_lider->age
+        return $this->pastor_birth_date
+            ? $this->pastor_birth_date->age
             : null;
-    }
-
-    /**
-     * Etiqueta legible del estado de registro en Colombia.
-     */
-    public function getEntidadLabelAttribute(): string
-    {
-        return self::ENTIDAD_OPCIONES[$this->entidad_registrada_colombia] ?? 'No registrada';
     }
 
      public function isActiva(): bool
     {
-        return $this->estado === 'activo';
+        return $this->church_status === 'Active';
     }
 
     // ── Relación many-to-many con Ayuda ───────────────────────
@@ -145,8 +118,14 @@ class Iglesia extends Model
     }
 
     public function eventos()
-{
-    return $this->hasMany(Evento::class);
-}
+    {
+        return $this->hasMany(Evento::class);
+    }
 
+    public function getContactEmail(): ?string
+    {
+        return ($this->pastor_email ?: null)
+            ?? ($this->correo_institucional ?: null)
+            ?? ($this->email ?: null);
+    }
 }

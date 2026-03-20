@@ -2,7 +2,7 @@
 
 @php
     $isActivo      = $evento->estado === 'activo';
-    $iglesiaNombre = $evento->iglesia->official_name ?? $evento->iglesia->nombre ?? null;
+    $iglesiaNombre = $evento->iglesia->official_name ?? null;
     $tipoColors    = [
         'retiro'      => ['bg' => '#F5F3FF', 'color' => '#6D28D9', 'border' => '#DDD6FE'],
         'conferencia' => ['bg' => '#EFF6FF', 'color' => '#1D4ED8', 'border' => '#BFDBFE'],
@@ -396,9 +396,9 @@
                         </div>
                         <div class="min-w-0">
                             <p class="text-sm font-bold text-slate-800 truncate">{{ $iglesiaNombre }}</p>
-                            @if($evento->iglesia->denomination ?? $evento->iglesia->denominacion ?? null)
+                            @if($evento->iglesia->denomination ?? null)
                                 <p class="text-xs text-slate-400 truncate">
-                                    {{ $evento->iglesia->denomination ?? $evento->iglesia->denominacion }}
+                                    {{ $evento->iglesia->denomination }}
                                 </p>
                             @endif
                         </div>

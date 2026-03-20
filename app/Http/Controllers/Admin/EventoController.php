@@ -17,7 +17,10 @@ class EventoController extends Controller
 
     public function create()
     {
-        $iglesias = Iglesia::orderBy('official_name')->get();
+        $iglesias = Iglesia::where('church_status', 'Active')
+            ->select('id', 'official_name')
+            ->orderBy('official_name')
+            ->get();
         return view('admin.eventos.create', compact('iglesias'));
     }
 
@@ -47,7 +50,10 @@ class EventoController extends Controller
 
     public function edit(Evento $evento)
     {
-        $iglesias = Iglesia::orderBy('official_name')->get();
+        $iglesias = Iglesia::where('church_status', 'Active')
+            ->select('id', 'official_name')
+            ->orderBy('official_name')
+            ->get();
         return view('admin.eventos.edit', compact('evento', 'iglesias'));
     }
 
@@ -77,7 +83,10 @@ class EventoController extends Controller
 
     public function calendar()
     {
-        $iglesias = \App\Models\Iglesia::orderBy('official_name')->get();
+        $iglesias = Iglesia::where('church_status', 'Active')
+            ->select('id', 'official_name')
+            ->orderBy('official_name')
+            ->get();
         $tiposEvento = ['retiro', 'conferencia', 'culto', 'campamento', 'otro'];
         return view('admin.eventos.calendar', [
             'iglesias' => $iglesias,

@@ -1,8 +1,8 @@
 @extends('layouts.admin')
 
-@section('title', 'Editar — ' . ($iglesia->official_name ?? $iglesia->nombre ?? 'Iglesia'))
+@section('title', 'Editar — ' . ($iglesia->official_name ?? 'Iglesia'))
 @section('page-title', 'Editar Iglesia')
-@section('page-subtitle', $iglesia->official_name ?? $iglesia->nombre)
+@section('page-subtitle', $iglesia->official_name)
 
 @section('content')
 
@@ -28,18 +28,18 @@
                             text-white flex-shrink-0"
                      style="background:rgba(255,255,255,0.15); backdrop-filter:blur(8px);
                             border:2px solid rgba(255,255,255,0.2);">
-                    {{ strtoupper(substr($iglesia->official_name ?? $iglesia->nombre ?? '?', 0, 1)) }}
+                    {{ strtoupper(substr($iglesia->official_name ?? '?', 0, 1)) }}
                 </div>
             @endif
             <div class="min-w-0">
                 <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5"
                    style="color:rgba(144,224,239,0.8);">Editando</p>
                 <h2 class="text-white font-bold text-lg leading-tight truncate">
-                    {{ $iglesia->official_name ?? $iglesia->nombre }}
+                    {{ $iglesia->official_name }}
                 </h2>
-                @if($iglesia->denomination ?? $iglesia->denominacion)
+                @if($iglesia->denomination)
                     <p class="text-xs mt-0.5" style="color:rgba(144,224,239,0.75);">
-                        {{ $iglesia->denomination ?? $iglesia->denominacion }}
+                        {{ $iglesia->denomination }}
                     </p>
                 @endif
             </div>

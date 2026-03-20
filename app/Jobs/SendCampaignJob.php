@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Http\Controllers\Admin\CampaignController;
 use App\Mail\CampaignMail;
 use App\Models\Campaign;
 use Illuminate\Bus\Queueable;
@@ -18,6 +17,7 @@ class SendCampaignJob implements ShouldQueue
 
     public int $tries = 3;
     public int $backoff = 30;
+    public int $timeout = 600;
 
     public function __construct(
         public Campaign $campaign,
@@ -28,12 +28,17 @@ class SendCampaignJob implements ShouldQueue
         $this->campaign->load(['images', 'recipients.iglesia']);
 
         foreach ($this->campaign->recipients as $recipient) {
+            // Saltar destinatarios ya enviados (evita duplicados en reintentos)
+            if ($recipient->sent_at) {
+                continue;
+            }
+
             $iglesia = $recipient->iglesia;
             if (!$iglesia) {
                 continue;
             }
 
-            $email = CampaignController::getEmail($iglesia);
+            $email = $iglesia->getContactEmail();
             if (!$email) {
                 continue;
             }

@@ -46,8 +46,8 @@
                 {{-- Stats dinámicos --}}
                 @php
                     $totalLogin   = \App\Models\Iglesia::count();
-                    $activasLogin = \App\Models\Iglesia::where('estado','activo')->count();
-                    $denomsLogin  = \App\Models\Iglesia::distinct()->count('denominacion');
+                    $activasLogin = \App\Models\Iglesia::where('church_status','Active')->count();
+                    $denomsLogin  = \App\Models\Iglesia::distinct()->count('denomination');
                 @endphp
                 <div class="panel-stats">
                     <div class="stat-item">

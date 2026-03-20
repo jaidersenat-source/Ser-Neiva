@@ -25,6 +25,12 @@ class IglesiaController extends Controller
         }
 
         $iglesias      = $query->paginate(15)->withQueryString();
+
+        $counts = Iglesia::selectRaw("
+            COUNT(*) as total,
+            SUM(CASE WHEN church_status = 'Active' THEN 1 ELSE 0 END) as activas
+        ")->first();
+
         $municipios    = Iglesia::select('municipality')
                             ->whereNotNull('municipality')
                             ->where('municipality', '!=', '')
@@ -34,8 +40,8 @@ class IglesiaController extends Controller
 
         return view('admin.iglesias.index', [
             'iglesias'   => $iglesias,
-            'total'      => Iglesia::count(),
-            'activas'    => Iglesia::where('estado', 'activo')->count(),
+            'total'      => (int) $counts->total,
+            'activas'    => (int) $counts->activas,
             'municipios' => $municipios,
         ]);
     }

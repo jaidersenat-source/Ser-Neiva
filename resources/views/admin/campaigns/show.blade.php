@@ -219,11 +219,11 @@
                         <div class="flex items-center gap-3 px-4 py-2.5">
                             <div class="w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
                                  style="background: linear-gradient(135deg, #065f46, #059669);">
-                                {{ strtoupper(substr($recipient->iglesia->official_name ?: $recipient->iglesia->nombre, 0, 1)) }}
+                                {{ strtoupper(substr($recipient->iglesia->official_name, 0, 1)) }}
                             </div>
                             <div class="min-w-0">
-                                <p class="text-xs font-semibold text-slate-700 truncate">{{ $recipient->iglesia->official_name ?: $recipient->iglesia->nombre }}</p>
-                                <p class="text-[11px] text-slate-400 truncate">{{ $recipient->iglesia->pastor_email ?: ($recipient->iglesia->correo_institucional ?: $recipient->iglesia->email) }}</p>
+                                <p class="text-xs font-semibold text-slate-700 truncate">{{ $recipient->iglesia->official_name }}</p>
+                                <p class="text-[11px] text-slate-400 truncate">{{ $recipient->iglesia->pastor_email ?: $recipient->iglesia->email }}</p>
                             </div>
                             @if($recipient->sent_at)
                                 <svg class="w-4 h-4 text-green-500 flex-shrink-0 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">

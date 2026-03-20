@@ -33,6 +33,7 @@ class IglesiaRequest extends FormRequest
             'phone_landline'        => ['nullable', 'string', 'max:20'],
             'phone_mobile'          => ['nullable', 'string', 'max:20'],
             'email'                 => ['nullable', 'email', 'max:150'],
+            'correo_institucional'  => ['nullable', 'email', 'max:150'],
             'website_or_social'     => ['nullable', 'string', 'max:255'],
 
             // ── Sección 4: Pastor ─────────────────────────────
@@ -90,8 +91,9 @@ class IglesiaRequest extends FormRequest
             'approx_members.integer' => 'El número de miembros debe ser un entero.',
             'approx_members.min'     => 'El número de miembros no puede ser negativo.',
             'approx_members.max'     => 'El número de miembros no puede superar 999.999.',
-            'email.email'            => 'El correo electrónico no tiene formato válido.',
-            'pastor_email.email'     => 'El correo del pastor no tiene formato válido.',
+            'email.email'                  => 'El correo electrónico no tiene formato válido.',
+            'correo_institucional.email'   => 'El correo institucional no tiene formato válido.',
+            'pastor_email.email'           => 'El correo del pastor no tiene formato válido.',
             'pastor_birth_date.date'  => 'La fecha de nacimiento del pastor no es válida.',
             'pastor_birth_date.before'=> 'La fecha de nacimiento debe ser anterior a hoy.',
             'pastor_birth_date.after' => 'La fecha de nacimiento no puede ser anterior a 1900.',

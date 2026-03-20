@@ -31,13 +31,17 @@ class CampaignController extends Controller
             ->pluck('city');
 
         $iglesias = Iglesia::select(
-                'id', 'official_name', 'nombre',
+                'id', 'official_name',
                 'pastor_email', 'correo_institucional', 'email',
-                'city', 'municipality', 'denomination', 'denominacion'
+                'city', 'municipality', 'denomination'
+            )
+            ->where(fn($q) => $q
+                ->where(fn($a) => $a->whereNotNull('pastor_email')->where('pastor_email', '!=', ''))
+                ->orWhere(fn($b) => $b->whereNotNull('correo_institucional')->where('correo_institucional', '!=', ''))
+                ->orWhere(fn($c) => $c->whereNotNull('email')->where('email', '!=', ''))
             )
             ->orderBy('official_name')
-            ->get()
-            ->filter(fn($i) => self::getEmail($i));
+            ->get();
 
         return view('admin.campaigns.create', compact('cities', 'iglesias'));
     }
@@ -165,15 +169,12 @@ class CampaignController extends Controller
 
     public static function getEmail(Iglesia $iglesia): ?string
     {
-        return ($iglesia->pastor_email ?: null)
-            ?? ($iglesia->correo_institucional ?: null)
-            ?? ($iglesia->email ?: null);
+        return $iglesia->getContactEmail();
     }
 
     public static function getContactName(Iglesia $iglesia): string
     {
         return $iglesia->pastor_full_name
-            ?: ($iglesia->pastor_sacerdote
-            ?: ($iglesia->official_name ?: $iglesia->nombre));
+            ?: ($iglesia->official_name ?? 'Sin nombre');
     }
 }

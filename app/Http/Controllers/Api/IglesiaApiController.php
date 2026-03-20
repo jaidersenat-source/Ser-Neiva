@@ -11,16 +11,10 @@ class IglesiaApiController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Iglesia::where(function ($q) {
-            $q->where('estado', 'activo')
-              ->orWhere('church_status', 'Activo');
-        });
+        $query = Iglesia::where('church_status', 'Active');
 
         if ($request->filled('denominacion')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('denominacion', $request->denominacion)
-                  ->orWhere('denomination', $request->denominacion);
-            });
+            $query->where('denomination', $request->denominacion);
         }
 
         if ($request->filled('municipality')) {
@@ -33,41 +27,33 @@ class IglesiaApiController extends Controller
 
         $iglesias = $query
             ->select([
-                'id', 'nombre', 'official_name',
-                'denominacion', 'denomination',
-                'direccion', 'address',
-                'municipality', 'department',
+                'id', 'official_name', 'denomination',
+                'address', 'municipality', 'department',
                 'comuna', 'latitud', 'longitud',
-                'pastor_sacerdote', 'pastor_full_name',
-                'telefono', 'phone_mobile', 'phone_landline',
-                'email', 'correo_institucional',
-                'celular_institucional', 'photo',
-                'fecha_nacimiento_lider', 'pastor_birth_date',
+                'pastor_full_name', 'phone_mobile', 'phone_landline',
+                'email', 'correo_institucional', 'pastor_email', 'photo', 'pastor_birth_date',
                 'schedule_weekdays', 'schedule_weekends',
             ])
             ->get()
             ->map(fn($i) => [
                 'id'                     => $i->id,
-                'nombre'                 => $i->official_name ?: $i->nombre,
-                'denominacion'           => $i->denomination  ?: $i->denominacion,
-                'direccion'              => $i->address       ?: $i->direccion,
+                'nombre'                 => $i->official_name,
+                'denominacion'           => $i->denomination,
+                'direccion'              => $i->address,
                 'municipality'           => $i->municipality,
-                'department'             => $i->department    ?: 'Huila',
+                'department'             => $i->department ?: 'Huila',
                 'comuna'                 => $i->comuna,
                 'latitud'                => (float) $i->latitud,
                 'longitud'               => (float) $i->longitud,
-                'pastor_sacerdote'       => $i->pastor_full_name ?: $i->pastor_sacerdote,
-                'telefono'               => $i->phone_landline  ?: $i->phone_mobile ?: $i->telefono,
-                'celular_institucional'  => $i->phone_mobile    ?: $i->celular_institucional,
-                'correo_institucional'   => $i->correo_institucional ?: $i->email,
+                'pastor_sacerdote'       => $i->pastor_full_name,
+                'telefono'               => $i->phone_landline ?: $i->phone_mobile,
+                'celular_institucional'  => $i->phone_mobile,
+                'correo_institucional'   => $i->correo_institucional ?: $i->pastor_email ?: $i->email,
                 'schedule_weekdays'      => $i->schedule_weekdays,
                 'schedule_weekends'      => $i->schedule_weekends,
                 'foto_url'               => $i->photo ? asset('storage/' . $i->photo) : null,
-                'fecha_nacimiento_lider' => $i->fecha_nacimiento_lider
-                    ? $i->fecha_nacimiento_lider->format('Y-m-d')
-                    : null,
                 'pastor_birth_date'      => $i->pastor_birth_date
-                    ? \Carbon\Carbon::parse($i->pastor_birth_date)->format('Y-m-d')
+                    ? $i->pastor_birth_date->format('Y-m-d')
                     : null,
             ]);
 
@@ -80,10 +66,17 @@ class IglesiaApiController extends Controller
 
     public function show(Iglesia $iglesia): JsonResponse
     {
-        if ($iglesia->estado !== 'activo') {
+        if ($iglesia->church_status !== 'Active') {
             return response()->json(['success' => false, 'message' => 'No encontrado'], 404);
         }
 
-        return response()->json(['success' => true, 'data' => $iglesia]);
+        return response()->json(['success' => true, 'data' => $iglesia->only([
+            'id', 'official_name', 'denomination', 'confessional_character',
+            'address', 'neighborhood', 'municipality', 'comuna', 'city',
+            'department', 'country', 'latitud', 'longitud',
+            'pastor_full_name', 'phone_mobile', 'phone_landline',
+            'email', 'correo_institucional', 'pastor_email', 'photo',
+            'schedule_weekdays', 'schedule_weekends', 'approx_members',
+        ])]);
     }
 }

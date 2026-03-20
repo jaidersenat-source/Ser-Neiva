@@ -55,12 +55,15 @@ Route::get('/dashboard', fn() => redirect()->route('admin.dashboard'))
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::get('/perfil', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
-Route::patch('/perfil', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
-Route::delete('/perfil', [App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
+Route::middleware('auth')->group(function () {
+    Route::get('/perfil', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/perfil', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/perfil', [App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
 Route::prefix('iglesias/export')
     ->name('iglesias.export.')
+    ->middleware(['auth', 'verified'])
     ->controller(\App\Http\Controllers\Admin\ExportController::class)
     ->group(function () {
         Route::get('pdf',   'pdf')   ->name('pdf');

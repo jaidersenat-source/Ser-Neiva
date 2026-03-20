@@ -1,10 +1,10 @@
 @extends('layouts.admin')
 
 @php
-    $nombre   = $iglesia->official_name ?? $iglesia->nombre ?? 'Sin nombre';
-    $denom    = $iglesia->denomination  ?? $iglesia->denominacion ?? '';
-    $status   = $iglesia->church_status ?? $iglesia->estado ?? 'Active';
-    $isActiva = in_array($status, ['Active', 'activo']);
+    $nombre   = $iglesia->official_name ?? 'Sin nombre';
+    $denom    = $iglesia->denomination ?? '';
+    $status   = $iglesia->church_status ?? 'Active';
+    $isActiva = $status === 'Active';
 @endphp
 
 @section('title', $nombre)
@@ -56,27 +56,27 @@
                         {{ $denom }}
                     </span>
                     <h2 class="text-white font-bold text-xl sm:text-2xl leading-tight">{{ $nombre }}</h2>
-                    @if($iglesia->address ?? $iglesia->direccion)
+                    @if($iglesia->address)
                         <p class="mt-1.5 text-xs flex items-center gap-1.5" style="color: rgba(144,224,239,0.85);">
                             <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
-                            {{ $iglesia->address ?? $iglesia->direccion }}
+                            {{ $iglesia->address }}
                         </p>
                     @endif
 
                     {{-- Pills --}}
                     <div class="flex flex-wrap gap-2 mt-3">
-                        @if($iglesia->approx_members ?? $iglesia->promedio_asistentes)
+                        @if($iglesia->approx_members)
                             <span class="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full"
                                   style="background:rgba(255,255,255,0.12); color:white;">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
-                                ~{{ number_format($iglesia->approx_members ?? $iglesia->promedio_asistentes) }} miembros
+                                ~{{ number_format($iglesia->approx_members) }} miembros
                             </span>
                         @endif
                         @if($iglesia->ayudas && $iglesia->ayudas->count())
@@ -174,8 +174,8 @@
             <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0 divide-y divide-slate-50 sm:divide-y-0">
                 @php
                     $infoItems = [
-                        ['label' => 'Nombre oficial',       'value' => $iglesia->official_name ?? $iglesia->nombre ?? null, 'bold' => true],
-                        ['label' => 'Denominación',          'value' => $iglesia->denomination ?? $iglesia->denominacion ?? null, 'chip' => true, 'chipColor' => 'blue'],
+                        ['label' => 'Nombre oficial',       'value' => $iglesia->official_name ?? null, 'bold' => true],
+                        ['label' => 'Denominación',          'value' => $iglesia->denomination ?? null, 'chip' => true, 'chipColor' => 'blue'],
                         ['label' => 'Carácter confesional', 'value' => $iglesia->confessional_character ?? null],
                         ['label' => 'Miembros aprox.',      'value' => $iglesia->approx_members ? '~'.number_format($iglesia->approx_members).' personas' : null],
                         ['label' => 'Fecha de fundación',   'value' => $iglesia->foundation_date ? (is_string($iglesia->foundation_date) ? $iglesia->foundation_date : $iglesia->foundation_date->translatedFormat('d \d\e F \d\e Y')) : null],
@@ -254,15 +254,15 @@
 
             <div class="p-5">
                 {{-- Avatar del pastor --}}
-                @if($iglesia->pastor_full_name ?? $iglesia->pastor_sacerdote)
+                @if($iglesia->pastor_full_name)
                     <div class="flex items-center gap-3 mb-4 p-3 rounded-xl" style="background:#FAFAFA; border:1px solid #F1F5F9;">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
                              style="background: linear-gradient(135deg, #D97706, #F59E0B);">
-                            {{ strtoupper(substr($iglesia->pastor_full_name ?? $iglesia->pastor_sacerdote ?? '?', 0, 1)) }}
+                            {{ strtoupper(substr($iglesia->pastor_full_name ?? '?', 0, 1)) }}
                         </div>
                         <div>
                             <p class="text-sm font-bold text-slate-800">
-                                {{ $iglesia->pastor_full_name ?? $iglesia->pastor_sacerdote }}
+                                {{ $iglesia->pastor_full_name }}
                             </p>
                             @if($iglesia->leadership_period_type)
                                 <p class="text-xs text-slate-400">{{ $iglesia->leadership_period_type }}</p>
@@ -273,11 +273,11 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0 divide-y divide-slate-50 sm:divide-y-0">
                     @php
-                        $pastorBirth = $iglesia->pastor_birth_date ?? $iglesia->fecha_nacimiento_lider ?? null;
+                        $pastorBirth = $iglesia->pastor_birth_date ?? null;
                         $pastorItems = [
                             ['label' => 'Documento',        'value' => ($iglesia->pastor_document_type && $iglesia->pastor_document_number) ? $iglesia->pastor_document_type.': '.$iglesia->pastor_document_number : null],
                             ['label' => 'Fecha de nacimiento', 'value' => $pastorBirth ? (is_string($pastorBirth) ? $pastorBirth : $pastorBirth->translatedFormat('d \d\e F \d\e Y')) : null],
-                            ['label' => 'Teléfono',          'value' => $iglesia->pastor_phone ?? $iglesia->telefono ?? null, 'tel' => true],
+                            ['label' => 'Teléfono',          'value' => $iglesia->pastor_phone ?? null, 'tel' => true],
                             ['label' => 'Email',             'value' => $iglesia->pastor_email ?? null, 'email' => true],
                         ];
                     @endphp
@@ -399,7 +399,7 @@
         @endif
 
         {{-- ── 5. OBSERVACIONES ── --}}
-        @if($iglesia->additional_notes ?? $iglesia->descripcion)
+        @if($iglesia->additional_notes)
         <div class="rounded-2xl p-5" style="background:#FFFBEB; border:1px solid #FDE68A;">
             <div class="flex items-center gap-2 mb-3">
                 <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -408,7 +408,7 @@
                 </svg>
                 <span class="text-xs font-bold text-amber-700 uppercase tracking-wider">Observaciones Adicionales</span>
             </div>
-            <p class="text-sm text-amber-900 leading-relaxed">{{ $iglesia->additional_notes ?? $iglesia->descripcion }}</p>
+            <p class="text-sm text-amber-900 leading-relaxed">{{ $iglesia->additional_notes }}</p>
         </div>
         @endif
 
@@ -467,10 +467,11 @@
             <div class="p-4 space-y-3">
                 @php
                     $contactItems = [
-                        ['icon' => '📞', 'label' => 'Teléfono fijo',  'value' => $iglesia->phone_landline ?? null, 'tel' => true],
-                        ['icon' => '📱', 'label' => 'Celular',         'value' => $iglesia->phone_mobile ?? $iglesia->celular_institucional ?? null, 'tel' => true],
-                        ['icon' => '✉',  'label' => 'Correo',          'value' => $iglesia->email ?? $iglesia->correo_institucional ?? null, 'email' => true],
-                        ['icon' => '🌐', 'label' => 'Web / Red social', 'value' => $iglesia->website_or_social ?? null, 'web' => true],
+                        ['icon' => '📞', 'label' => 'Teléfono fijo',       'value' => $iglesia->phone_landline ?? null, 'tel' => true],
+                        ['icon' => '📱', 'label' => 'Celular',              'value' => $iglesia->phone_mobile ?? null, 'tel' => true],
+                        ['icon' => '✉',  'label' => 'Correo general',       'value' => $iglesia->email ?? null, 'email' => true],
+                        ['icon' => '📧', 'label' => 'Correo institucional', 'value' => $iglesia->correo_institucional ?? null, 'email' => true],
+                        ['icon' => '🌐', 'label' => 'Web / Red social',     'value' => $iglesia->website_or_social ?? null, 'web' => true],
                     ];
                 @endphp
                 @foreach($contactItems as $c)
@@ -501,7 +502,7 @@
                         </div>
                     @endif
                 @endforeach
-                @if(!($iglesia->phone_landline || $iglesia->phone_mobile || $iglesia->email || $iglesia->website_or_social))
+                @if(!($iglesia->phone_landline || $iglesia->phone_mobile || $iglesia->email || $iglesia->correo_institucional || $iglesia->website_or_social))
                     <p class="text-xs text-slate-400 italic text-center py-2">Sin datos de contacto registrados</p>
                 @endif
             </div>
@@ -523,7 +524,7 @@
             <div class="p-4 space-y-2">
                 @php
                     $ubicItems = [
-                        ['label'=>'Dirección',     'value'=>$iglesia->address ?? $iglesia->direccion ?? null],
+                        ['label'=>'Dirección',     'value'=>$iglesia->address ?? null],
                         ['label'=>'Barrio',        'value'=>$iglesia->neighborhood ?? null],
                         ['label'=>'Comuna',        'value'=>$iglesia->comuna ?? null],
                         ['label'=>'Municipio',     'value'=>$iglesia->municipality ?? null],
@@ -674,7 +675,7 @@
                 Esta acción eliminará permanentemente la iglesia y no se puede deshacer.
             </p>
             <form method="POST" action="{{ route('admin.iglesias.destroy', $iglesia) }}"
-                  onsubmit="return confirm('¿Confirmas eliminar «{{ addslashes($iglesia->official_name ?? $iglesia->nombre ?? '') }}»? Esta acción no se puede deshacer.')">
+                  onsubmit="return confirm('¿Confirmas eliminar «{{ addslashes($iglesia->official_name ?? '') }}»? Esta acción no se puede deshacer.')">
                 @csrf @method('DELETE')
                 <button type="submit"
                         class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold
@@ -700,9 +701,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     const lat   = {{ $iglesia->latitud }};
     const lng   = {{ $iglesia->longitud }};
-    const name  = @json($iglesia->official_name ?? $iglesia->nombre);
-    const addr  = @json($iglesia->address ?? $iglesia->direccion);
-    const denom = @json($iglesia->denomination ?? $iglesia->denominacion);
+    const name  = @json($iglesia->official_name);
+    const addr  = @json($iglesia->address);
+    const denom = @json($iglesia->denomination);
     const ayudas= @json($iglesia->ayudas->map(fn($a) => ['icono' => $a->icono ?? '🤝', 'nombre' => $a->nombre]));
 
     const map = L.map('show-map', { zoomControl: true }).setView([lat, lng], 16);

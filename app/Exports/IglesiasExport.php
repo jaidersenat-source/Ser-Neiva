@@ -15,8 +15,8 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class IglesiasExport implements FromArray, WithTitle, WithColumnWidths, WithProperties, WithEvents
 {
-    private const LAST_COL   = 'AW';
-    private const TOTAL_COLS = 49; // A ??? AW
+    private const LAST_COL   = 'AO';
+    private const TOTAL_COLS = 41; // A → AO
 
     public function __construct(private readonly Collection $iglesias) {}
 
@@ -29,106 +29,97 @@ class IglesiasExport implements FromArray, WithTitle, WithColumnWidths, WithProp
         $rows[] = $this->pad(['????  EXPORTACI??N DE IGLESIAS  |  Sistema de Gesti??n del Sector Religioso de Neiva']);
 
         // Fila 2: Leyenda
-        $rows[] = $this->pad(['  ???? Campo OBLIGATORIO    ??? Campo opcional    |    Fechas: YYYY-MM-DD    |    Estado BD: activo / inactivo    |    Registrada Colombia: SI / NO / EN_PROCESO']);
+        $rows[] = $this->pad(['  🔖 Campo OBLIGATORIO    ◻ Campo opcional    |    Fechas: YYYY-MM-DD    |    Estado: Active / Inactive / Suspended']);
 
-        // Fila 3: Cabeceras de secci??n (solo la primera celda de cada grupo)
+        // Fila 3: Cabeceras de sección (solo la primera celda de cada grupo)
         $sec = array_fill(0, self::TOTAL_COLS, '');
-        $sec[0]  = 'INFORMACI??N GENERAL';
-        $sec[9]  = 'UBICACI??N';
-        $sec[19] = 'CONTACTO';
-        $sec[25] = 'PASTOR PRINCIPAL';
-        $sec[33] = 'L??DER DE MUJERES';
-        $sec[36] = 'DATOS JUR??DICOS';
-        $sec[45] = 'PROGRAMAS';
+        $sec[0]  = 'INFORMACIÓN GENERAL';
+        $sec[7]  = 'UBICACIÓN';
+        $sec[15] = 'CONTACTO';
+        $sec[20] = 'PASTOR PRINCIPAL';
+        $sec[27] = 'LÍDER DE MUJERES';
+        $sec[30] = 'DATOS JURÍDICOS';
+        $sec[38] = 'PROGRAMAS';
         $rows[] = $sec;
 
-        // Fila 4: Claves de campo (nombre t??cnico de BD)
+        // Fila 4: Claves de campo (nombre técnico de BD)
         $rows[] = [
-            'nombre','official_name','denomination','confessional_character','church_status',
-            'estado','specific_location','foundation_date','approx_members',
-            'address','direccion','neighborhood','municipality','city','department','country',
-            'corregimiento','latitud','longitud',
-            'phone_landline','phone_mobile','celular_institucional','website_or_social',
-            'correo_institucional','email',
-            'pastor_full_name','pastor_sacerdote','pastor_document_type','pastor_document_number',
+            'official_name','denomination','confessional_character','church_status',
+            'specific_location','foundation_date','approx_members',
+            'address','neighborhood','municipality','city','department','country',
+            'latitud','longitud',
+            'phone_landline','phone_mobile','website_or_social','email','correo_institucional',
+            'pastor_full_name','pastor_document_type','pastor_document_number',
             'pastor_birth_date','leadership_period_type','pastor_phone','pastor_email',
             'women_leader_full_name','women_leader_phone','women_leader_email',
             'legal_registration_type','legal_registration_number','legal_entity_granting',
             'resolution_number','resolution_date','file_number','legal_personality_type',
-            'legal_notes','entidad_registrada_colombia',
-            'ministries','additional_notes','descripcion','photo',
+            'legal_notes',
+            'ministries','additional_notes','photo',
         ];
 
         // Fila 5: Etiquetas legibles
         $rows[] = [
-            '???? Nombre (legacy)','???? Nombre Oficial','Denominaci??n','Car??cter Confesional','Estado (texto)',
-            '???? Estado BD','Ubicaci??n Espec??fica','Fecha Fundaci??n','Aprox. Miembros',
-            'Direcci??n','Direcci??n (legacy)','Barrio','Municipio','Ciudad','Departamento','Pa??s',
-            'Corregimiento','Latitud','Longitud',
-            'Tel??fono Fijo','Celular Institucional','Celular (legacy)','Web / Red Social',
-            'Correo Institucional','Email (legacy)',
-            'Pastor - Nombre Completo','Pastor (legacy)','Pastor - Tipo Doc.','Pastor - N. Documento',
-            'Pastor - Fecha Nacimiento','Pastor - Tipo Per??odo','Pastor - Tel??fono','Pastor - Email',
-            'L??der Mujeres - Nombre','L??der Mujeres - Tel??fono','L??der Mujeres - Email',
-            'Tipo Registro Legal','N?? Personer??a Jur??dica','Entidad que otorga',
-            'N?? Resoluci??n','Fecha Resoluci??n','N?? Expediente','Tipo Personer??a',
-            'Notas Jur??dicas','Registrada Colombia',
-            'Ministerios (JSON)','Notas Adicionales','Descripci??n (legacy)','Foto (ruta/URL)',
+            '🔖 Nombre Oficial','Denominación','Carácter Confesional','Estado',
+            'Ubicación Específica','Fecha Fundación','Aprox. Miembros',
+            'Dirección','Barrio','Municipio','Ciudad','Departamento','País',
+            'Latitud','Longitud',
+            'Teléfono Fijo','Celular Institucional','Web / Red Social','Correo General','Correo Institucional',
+            'Pastor - Nombre Completo','Pastor - Tipo Doc.','Pastor - N. Documento',
+            'Pastor - Fecha Nacimiento','Pastor - Tipo Período','Pastor - Teléfono','Pastor - Email',
+            'Líder Mujeres - Nombre','Líder Mujeres - Teléfono','Líder Mujeres - Email',
+            'Tipo Registro Legal','N° Personería Jurídica','Entidad que otorga',
+            'N° Resolución','Fecha Resolución','N° Expediente','Tipo Personería',
+            'Notas Jurídicas',
+            'Ministerios (JSON)','Notas Adicionales','Foto (ruta/URL)',
         ];
 
         // Fila 6: Descripciones / hints
         $rows[] = [
-            'Nombre corto o legado','Nombre legal completo','Ej: Cristiano, Cat??lico, Pentecostal',
-            'Ej: Evang??lico, Cristiano, Cat??lico','Texto libre del estado','Solo: activo / inactivo',
-            'Ej: Comuna 5, Corregimiento El Caguan','Formato: YYYY-MM-DD','N??mero entero',
-            '','Igual que address','','','','','',
-            'Solo si aplica zona rural','Decimal, ej: 2.9273','Decimal, ej: -75.2819',
-            'Sin espacios ni guiones','','Igual que phone_mobile','',
-            '','Igual que correo_institucional',
-            '','','CC / CE / PA','Solo n??meros',
+            'Nombre legal completo','Ej: Cristiano, Católico, Pentecostal',
+            'Ej: Evangélico, Cristiano, Católico','Active / Inactive / Suspended',
+            'Ej: Comuna 5, Corregimiento El Caguan','Formato: YYYY-MM-DD','Número entero',
+            'Dirección completa','','','','','',
+            'Decimal, ej: 2.9273','Decimal, ej: -75.2819',
+            'Sin espacios ni guiones','','','','',
+            '','CC / CE / PA','Solo números',
             'Formato: YYYY-MM-DD','Determinado / Vitalicio / Indefinido','','',
             '','','',
             '','','',
             '','Formato: YYYY-MM-DD','','Especial / Extendida',
-            'Observaciones legales','SI / NO / EN_PROCESO',
-            'Array JSON: ["Min1","Min2"]','','Descripci??n general','Ruta o URL de la imagen',
+            'Observaciones legales',
+            'Array JSON: ["Min1","Min2"]','','Ruta o URL de la imagen',
         ];
 
         // Filas de datos (fila 7 en adelante)
         foreach ($this->iglesias as $iglesia) {
             $rows[] = [
-                $iglesia->nombre,
                 $iglesia->official_name,
                 $iglesia->denomination,
                 $iglesia->confessional_character,
                 $iglesia->church_status,
-                $iglesia->estado,
                 $iglesia->specific_location,
                 $iglesia->foundation_date?->format('Y-m-d'),
-                $iglesia->approx_members ?? $iglesia->promedio_asistentes,
+                $iglesia->approx_members,
                 $iglesia->address,
-                $iglesia->direccion,
                 $iglesia->neighborhood,
                 $iglesia->municipality,
                 $iglesia->city,
                 $iglesia->department,
                 $iglesia->country,
-                $iglesia->corregimiento,
                 $iglesia->latitud,
                 $iglesia->longitud,
                 $iglesia->phone_landline,
-                $iglesia->phone_mobile ?? $iglesia->celular_institucional,
-                $iglesia->celular_institucional,
+                $iglesia->phone_mobile,
                 $iglesia->website_or_social,
-                $iglesia->correo_institucional,
                 $iglesia->email,
+                $iglesia->correo_institucional,
                 $iglesia->pastor_full_name,
-                $iglesia->pastor_sacerdote,
                 $iglesia->pastor_document_type,
                 $iglesia->pastor_document_number,
-                ($iglesia->pastor_birth_date ?? $iglesia->fecha_nacimiento_lider)?->format('Y-m-d'),
+                $iglesia->pastor_birth_date?->format('Y-m-d'),
                 $iglesia->leadership_period_type,
-                $iglesia->pastor_phone ?? $iglesia->telefono,
+                $iglesia->pastor_phone,
                 $iglesia->pastor_email,
                 $iglesia->women_leader_full_name,
                 $iglesia->women_leader_phone,
@@ -141,10 +132,8 @@ class IglesiasExport implements FromArray, WithTitle, WithColumnWidths, WithProp
                 $iglesia->file_number,
                 $iglesia->legal_personality_type,
                 $iglesia->legal_notes,
-                $iglesia->entidad_registrada_colombia,
                 $iglesia->ministries ? json_encode($iglesia->ministries, JSON_UNESCAPED_UNICODE) : null,
                 $iglesia->additional_notes,
-                $iglesia->descripcion,
                 $iglesia->photo,
             ];
         }
@@ -161,17 +150,17 @@ class IglesiasExport implements FromArray, WithTitle, WithColumnWidths, WithProp
     public function columnWidths(): array
     {
         return [
-            'A' => 22,'B' => 30,'C' => 16,'D' => 18,'E' => 14,
-            'F' => 11,'G' => 24,'H' => 14,'I' => 12,
-            'J' => 28,'K' => 28,'L' => 16,'M' => 14,'N' => 14,
-            'O' => 14,'P' => 12,'Q' => 18,'R' => 12,'S' => 12,
-            'T' => 14,'U' => 16,'V' => 16,'W' => 22,'X' => 24,'Y' => 24,
-            'Z' => 26,'AA'=> 24,'AB'=> 14,'AC'=> 16,'AD'=> 16,
-            'AE'=> 18,'AF'=> 14,'AG'=> 24,
-            'AH'=> 26,'AI'=> 16,'AJ'=> 24,
-            'AK'=> 22,'AL'=> 20,'AM'=> 26,'AN'=> 16,'AO'=> 16,
-            'AP'=> 16,'AQ'=> 16,'AR'=> 28,'AS'=> 16,
-            'AT'=> 30,'AU'=> 30,'AV'=> 30,'AW'=> 24,
+            'A' => 30,'B' => 16,'C' => 18,'D' => 14,'E' => 24,
+            'F' => 14,'G' => 12,
+            'H' => 28,'I' => 16,'J' => 14,'K' => 14,'L' => 14,
+            'M' => 12,'N' => 12,'O' => 12,
+            'P' => 14,'Q' => 16,'R' => 22,'S' => 24,'T' => 24,
+            'U' => 26,'V' => 14,'W' => 16,'X' => 16,
+            'Y' => 18,'Z' => 14,'AA'=> 24,
+            'AB'=> 26,'AC'=> 16,'AD'=> 24,
+            'AE'=> 22,'AF'=> 20,'AG'=> 26,'AH'=> 16,'AI'=> 16,
+            'AJ'=> 16,'AK'=> 16,'AL'=> 28,
+            'AM'=> 30,'AN'=> 30,'AO'=> 24,
         ];
     }
 
@@ -202,13 +191,13 @@ class IglesiasExport implements FromArray, WithTitle, WithColumnWidths, WithProp
                 $sheet->mergeCells("A2:{$lc}2");
 
                 // ?????? Merge: secciones fila 3 ????????????????????????????????????????????????????????????????????????
-                $sheet->mergeCells('A3:I3');
-                $sheet->mergeCells('J3:S3');
-                $sheet->mergeCells('T3:Y3');
-                $sheet->mergeCells('Z3:AG3');
-                $sheet->mergeCells('AH3:AJ3');
-                $sheet->mergeCells('AK3:AS3');
-                $sheet->mergeCells('AT3:AW3');
+                $sheet->mergeCells('A3:G3');
+                $sheet->mergeCells('H3:O3');
+                $sheet->mergeCells('P3:T3');
+                $sheet->mergeCells('U3:AA3');
+                $sheet->mergeCells('AB3:AD3');
+                $sheet->mergeCells('AE3:AL3');
+                $sheet->mergeCells('AM3:AO3');
 
                 // ?????? Fila 1: T??tulo ???????????????????????????????????????????????????????????????????????????????????????????????????
                 $sheet->getStyle("A1:{$lc}1")->applyFromArray([
@@ -228,13 +217,13 @@ class IglesiasExport implements FromArray, WithTitle, WithColumnWidths, WithProp
 
                 // ?????? Fila 3: Colores por secci??n ????????????????????????????????????????????????????????????
                 foreach ([
-                    'A3:I3'   => '4472C4',
-                    'J3:S3'   => '2E75B6',
-                    'T3:Y3'   => '548235',
-                    'Z3:AG3'  => '833C00',
-                    'AH3:AJ3' => '7030A0',
-                    'AK3:AS3' => 'C55A11',
-                    'AT3:AW3' => '7F6000',
+                    'A3:G3'   => '4472C4',
+                    'H3:O3'   => '2E75B6',
+                    'P3:T3'   => '548235',
+                    'U3:AA3'  => '833C00',
+                    'AB3:AD3' => '7030A0',
+                    'AE3:AL3' => 'C55A11',
+                    'AM3:AO3' => '7F6000',
                 ] as $range => $bg) {
                     $sheet->getStyle($range)->applyFromArray([
                         'font'      => ['bold' => true, 'size' => 9, 'color' => ['rgb' => 'FFFFFF']],
@@ -256,13 +245,13 @@ class IglesiasExport implements FromArray, WithTitle, WithColumnWidths, WithProp
 
                 // ?????? Fila 5: Etiquetas (fondo claro por secci??n) ????????????
                 foreach ([
-                    'A5:I5'   => 'D6E4F7',
-                    'J5:S5'   => 'D6EAF8',
-                    'T5:Y5'   => 'D5E8D4',
-                    'Z5:AG5'  => 'F8D7C0',
-                    'AH5:AJ5' => 'E8D5F5',
-                    'AK5:AS5' => 'FCE5D4',
-                    'AT5:AW5' => 'FFF2CC',
+                    'A5:G5'   => 'D6E4F7',
+                    'H5:O5'   => 'D6EAF8',
+                    'P5:T5'   => 'D5E8D4',
+                    'U5:AA5'  => 'F8D7C0',
+                    'AB5:AD5' => 'E8D5F5',
+                    'AE5:AL5' => 'FCE5D4',
+                    'AM5:AO5' => 'FFF2CC',
                 ] as $range => $bg) {
                     $sheet->getStyle($range)->applyFromArray([
                         'font'      => ['bold' => true, 'size' => 8, 'color' => ['rgb' => '1E293B']],

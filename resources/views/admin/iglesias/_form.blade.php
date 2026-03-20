@@ -291,13 +291,24 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-                <label class="{{ $lbl }}" for="email">Correo electrónico</label>
+                <label class="{{ $lbl }}" for="email">Correo electrónico general</label>
                 <input type="email" id="email" name="email"
                        value="{{ old('email', $iglesia->email ?? '') }}"
                        class="{{ $inp }} {{ $errors->has('email') ? $inpE : '' }}"
                        placeholder="iglesia@ejemplo.org" maxlength="150">
                 @error('email')<p class="flex items-center gap-1.5 text-xs font-semibold text-red-500 mt-1.5">{!! errIcon() !!} {{ $message }}</p>@enderror
             </div>
+            <div>
+                <label class="{{ $lbl }}" for="correo_institucional">Correo institucional</label>
+                <input type="email" id="correo_institucional" name="correo_institucional"
+                       value="{{ old('correo_institucional', $iglesia->correo_institucional ?? '') }}"
+                       class="{{ $inp }} {{ $errors->has('correo_institucional') ? $inpE : '' }}"
+                       placeholder="secretaria@iglesia.org" maxlength="150">
+                @error('correo_institucional')<p class="flex items-center gap-1.5 text-xs font-semibold text-red-500 mt-1.5">{!! errIcon() !!} {{ $message }}</p>@enderror
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="{{ $lbl }}" for="website_or_social">Sitio web o red social</label>
                 <input type="text" id="website_or_social" name="website_or_social"
@@ -793,11 +804,12 @@
     const NOMINATIM   = 'https://nominatim.openstreetmap.org';
     const DEBOUNCE_MS = 600;
 
-    const latInput = document.getElementById('latitud');
-    const lngInput = document.getElementById('longitud');
-    const dirInput = document.getElementById('address');
-    const geoIcon  = document.getElementById('geo-status-icon');
-    const geoMsg   = document.getElementById('geo-status-msg');
+    const latInput  = document.getElementById('latitud');
+    const lngInput  = document.getElementById('longitud');
+    const dirInput  = document.getElementById('address');
+    const munSelect = document.getElementById('municipality');
+    const geoIcon   = document.getElementById('geo-status-icon');
+    const geoMsg    = document.getElementById('geo-status-msg');
 
     const initLat = parseFloat(latInput.value) || NEIVA[0];
     const initLng = parseFloat(lngInput.value) || NEIVA[1];
@@ -848,8 +860,9 @@
     async function geocodificarDireccion(query) {
         if(!query||query.trim().length<5){return;}
         geoSetBuscando();
+        const mun = munSelect ? munSelect.value : 'Neiva';
         const url = new URL(NOMINATIM+'/search');
-        url.searchParams.set('q', query.trim()+', Neiva, Huila, Colombia');
+        url.searchParams.set('q', query.trim()+', '+ mun +', Huila, Colombia');
         url.searchParams.set('format','json'); url.searchParams.set('limit','1');
         url.searchParams.set('countrycodes','co'); url.searchParams.set('accept-language','es');
         try {

@@ -267,9 +267,9 @@
                                            {{ in_array($iglesia->id, old('iglesias', [])) ? 'checked' : '' }}
                                            class="rounded text-emerald-600 focus:ring-emerald-500">
                                     <div class="min-w-0">
-                                        <p class="text-xs font-semibold text-slate-700 truncate">{{ $iglesia->official_name ?: $iglesia->nombre }}</p>
+                                        <p class="text-xs font-semibold text-slate-700 truncate">{{ $iglesia->official_name }}</p>
                                         <p class="text-[11px] text-slate-400 truncate">
-                                            {{ $iglesia->pastor_email ?: ($iglesia->correo_institucional ?: $iglesia->email) }}
+                                            {{ $iglesia->pastor_email ?: $iglesia->email }}
                                             {{ ($iglesia->city ?: $iglesia->municipality) ? ' · ' . ($iglesia->city ?: $iglesia->municipality) : '' }}
                                         </p>
                                     </div>
