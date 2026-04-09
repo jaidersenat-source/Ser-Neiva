@@ -93,8 +93,8 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.sports_venues.update', $venue) }}" method="POST"
-          novalidate id="form-editar-venue">
+        <form action="{{ route('admin.sports_venues.update', $venue) }}" method="POST"
+            enctype="multipart/form-data" novalidate id="form-editar-venue">
         @csrf
         @method('PUT')
         @include('admin.sports_venues._form')

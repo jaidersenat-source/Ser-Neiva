@@ -262,6 +262,34 @@
 </div>
 
 {{-- ═══════════════════════════════════
+     SECCIÓN 5 – Imagen principal
+═══════════════════════════════════ --}}
+<div id="seccion-5" class="scroll-mt-20 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-5">
+    <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-50" style="background: linear-gradient(135deg, #F8FAFF, #EFF6FF);">
+        <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-extrabold flex-shrink-0" style="background: linear-gradient(135deg, #0a1f5c, #0e6ba8);">5</div>
+        <div>
+            <p class="text-sm font-bold text-slate-800">Imagen principal</p>
+            <p class="text-xs text-slate-400 mt-0.5">Sube una imagen que se mostrará en la ficha y en el mapa</p>
+        </div>
+    </div>
+
+    <div class="p-5">
+        <label for="imagen_principal" class="{{ $lbl }}">Imagen principal</label>
+        <div class="flex items-center gap-4">
+            <input type="file" id="imagen_principal" name="imagen_principal" accept="image/*" class="text-sm">
+            @if(isset($evento) && $evento->imagen_principal)
+                <div class="w-20 h-20 rounded-lg overflow-hidden border border-slate-100">
+                    <img src="{{ asset('storage/' . $evento->imagen_principal) }}" alt="Imagen" class="w-full h-full object-cover">
+                </div>
+            @endif
+        </div>
+        @error('imagen_principal')
+            <p class="text-xs text-red-500 mt-2">{{ $message }}</p>
+        @enderror
+    </div>
+</div>
+
+{{-- ═══════════════════════════════════
      SECCIÓN 4 – Geolocalización
 ═══════════════════════════════════ --}}
 <div id="seccion-4" class="scroll-mt-20 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden mb-5">

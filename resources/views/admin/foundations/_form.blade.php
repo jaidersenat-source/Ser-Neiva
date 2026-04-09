@@ -241,6 +241,30 @@
             </div>
         </div>
 
+        {{-- Imagen de la fundación (opcional) --}}
+        <div>
+            <label for="imagen_principal" class="{{ $lbl }}">Imagen de la Fundación</label>
+            <div class="flex items-center gap-3">
+                <input type="file" id="imagen_principal" name="imagen_principal" accept="image/*" class="text-sm">
+                <button type="button" id="btn-remove-image" class="text-xs text-red-500 hidden">Quitar</button>
+            </div>
+            <p class="text-xs text-slate-400 mt-1.5">Sube una imagen representativa de la fundación (opcional). Tamaño máximo recomendado 2MB.</p>
+
+            @if(isset($foundation) && ($foundation->imagen_principal ?? $foundation->image ?? false))
+                <div id="image-preview" class="mt-3 w-40 h-28 overflow-hidden rounded-lg border border-slate-200">
+                    <img src="{{ asset('storage/' . ($foundation->imagen_principal ?? $foundation->image)) }}" alt="Imagen" class="w-full h-full object-cover">
+                </div>
+            @else
+                <div id="image-preview" class="mt-3 w-40 h-28 overflow-hidden rounded-lg border border-slate-200 hidden">
+                    <img src="" alt="Imagen" class="w-full h-full object-cover">
+                </div>
+            @endif
+
+            @error('imagen_principal')
+                <p class="flex items-center gap-1.5 text-xs font-semibold text-red-500 mt-1.5">{{ $message }}</p>
+            @enderror
+        </div>
+
         {{-- Mini-mapa selector ── --}}
         <div>
             <div class="flex items-center justify-between mb-1.5">
@@ -406,6 +430,32 @@
 
     /* Forzar recálculo de tamaño cuando el mapa sea visible */
     setTimeout(function () { map.invalidateSize(); }, 300);
+})();
+
+// Imagen preview
+(function(){
+    var input = document.getElementById('imagen_principal');
+    var previewWrap = document.getElementById('image-preview');
+    var previewImg = previewWrap ? previewWrap.querySelector('img') : null;
+    var btnRemove = document.getElementById('btn-remove-image');
+
+    if (!input) return;
+
+    input.addEventListener('change', function(e){
+        var file = this.files && this.files[0];
+        if (!file) return;
+        var url = URL.createObjectURL(file);
+        if (previewImg) { previewImg.src = url; previewWrap.classList.remove('hidden'); }
+        if (btnRemove) btnRemove.classList.remove('hidden');
+    });
+
+    if (btnRemove) {
+        btnRemove.addEventListener('click', function(){
+            input.value = '';
+            if (previewImg) { previewImg.src = ''; previewWrap.classList.add('hidden'); }
+            this.classList.add('hidden');
+        });
+    }
 })();
 </script>
 @endpush

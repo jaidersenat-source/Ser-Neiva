@@ -43,13 +43,13 @@
                 </div>
                 <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">Directorio de Iglesias</h1>
             </div>
-            <p class="text-sm ml-12" style="color: rgba(144,224,239,0.85);">
+            <p class="text-sm mt-1 sm:mt-0" style="color: rgba(144,224,239,0.85);">
                 Gestión y administración del directorio de congregaciones registradas
             </p>
         </div>
 
         {{-- Stats inline --}}
-        <div class="flex gap-4 ml-12 sm:ml-0">
+        <div class="flex gap-4 mt-3 sm:mt-0 sm:ml-0">
             <div class="text-center">
                 <p class="text-2xl font-extrabold text-white leading-none">{{ $iglesias->total() }}</p>
                 <p class="text-xs mt-0.5" style="color: rgba(144,224,239,0.8);">Total</p>
@@ -73,32 +73,28 @@
     {{-- Filtros izquierda --}}
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 flex-wrap">
 
-        {{-- Buscador --}}
-        <div class="relative">
-            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        {{-- Buscador (server-side) --}}
+        <form method="GET" action="{{ route('admin.iglesias.index') }}" id="form-buscador" class="relative w-full sm:w-auto">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
-            <input type="text" id="buscador-iglesias"
+            <input type="search" name="q" id="buscador-iglesias" value="{{ request('q') }}"
                    placeholder="Buscar iglesia, pastor, denominación, jurídico…"
                    aria-label="Buscar iglesia"
-                   oninput="filtrarTabla(this.value)"
-                   class="pl-10 pr-9 py-2.5 text-sm rounded-xl border border-slate-200 bg-white
-                          shadow-sm w-full sm:w-64 focus:outline-none focus:ring-2
-                          focus:border-blue-500 text-slate-700 transition-all placeholder-slate-400"
+                   class="pl-10 pr-10 py-2.5 text-sm rounded-xl border border-slate-200 bg-white shadow-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:border-blue-500 text-slate-700 transition-all placeholder-slate-400"
                    style="focus-ring-color: rgba(14,107,168,0.2);">
-            <button id="btn-clear" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                    onclick="limpiarBusqueda()" aria-label="Limpiar búsqueda">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
+            @if(request('q'))
+                <a href="{{ route('admin.iglesias.index', request()->except('q')) }}" id="btn-clear" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors" aria-label="Limpiar búsqueda">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </a>
+            @else
+                <button type="submit" style="display:none"></button>
+            @endif
+        </form>
 
         {{-- Municipio --}}
         <form method="GET" action="{{ route('admin.iglesias.index') }}" id="form-municipio" class="flex items-center gap-1.5">
-            <div class="relative">
+            <div class="relative w-full sm:w-auto">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none"
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -106,10 +102,10 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
                 <select name="municipality"
-                        onchange="document.getElementById('form-municipio').submit()"
-                        class="pl-8 pr-8 py-2.5 text-sm rounded-xl border border-slate-200 bg-white
-                               shadow-sm focus:outline-none focus:ring-2 focus:border-blue-500
-                               text-slate-700 transition-all cursor-pointer appearance-none">
+                    onchange="document.getElementById('form-municipio').submit()"
+                    class="w-full sm:w-auto pl-8 pr-8 py-2.5 text-sm rounded-xl border border-slate-200 bg-white
+                           shadow-sm focus:outline-none focus:ring-2 focus:border-blue-500
+                           text-slate-700 transition-all cursor-pointer appearance-none">
                     <option value="">Todos los municipios</option>
                     @foreach($municipios as $mun)
                         <option value="{{ $mun }}" {{ request('municipality') === $mun ? 'selected' : '' }}>
@@ -133,16 +129,16 @@
         </form>
 
         {{-- Filtro ayuda --}}
-        <div class="relative">
+        <div class="relative w-full sm:w-auto">
             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none"
                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
-            <select id="filtro-ayuda"
-                    class="pl-8 pr-8 py-2.5 text-sm rounded-xl border border-slate-200 bg-white
-                           shadow-sm focus:outline-none focus:ring-2 focus:border-blue-500
-                           text-slate-700 transition-all cursor-pointer appearance-none">
+                <select id="filtro-ayuda"
+                    class="w-full sm:w-auto pl-8 pr-8 py-2.5 text-sm rounded-xl border border-slate-200 bg-white
+                       shadow-sm focus:outline-none focus:ring-2 focus:border-blue-500
+                       text-slate-700 transition-all cursor-pointer appearance-none">
                 <option value="">Todas las ayudas</option>
                 @foreach($ayudasFiltro as $ayuda)
                     <option value="{{ $ayuda->id }}">{{ $ayuda->nombre }}</option>
@@ -156,17 +152,17 @@
     </div>
 
     {{-- Acciones derecha --}}
-    <div class="flex items-center gap-2 flex-shrink-0">
+    <div class="flex items-center gap-2 flex-shrink-0 flex-wrap">
 
         {{-- Nueva iglesia --}}
-        <a href="{{ route('admin.iglesias.create') }}"
+         <a href="{{ route('admin.iglesias.create') }}"
            class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl
                   shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
            style="background: linear-gradient(135deg, #0a1f5c, #0e6ba8);">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
             </svg>
-            <span class="hidden xs:inline sm:inline">Nueva Iglesia</span>
+            <span class="hidden sm:inline">Nueva Iglesia</span>
         </a>
 
         {{-- Export dropdown --}}
@@ -485,7 +481,7 @@
                 </div>
 
                 {{-- Detalles --}}
-                <div class="space-y-1.5 mb-3 pl-14">
+                <div class="space-y-1.5 mb-3">
                     <div class="flex items-center gap-2 text-xs text-slate-500">
                         <svg class="w-3.5 h-3.5 text-slate-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
@@ -512,7 +508,7 @@
                 </div>
 
                 {{-- Acciones --}}
-                <div class="flex gap-2 pl-14">
+                <div class="flex gap-2">
                     <a href="{{ route('admin.iglesias.show', $iglesia) }}"
                        class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold
                               rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-blue-50
@@ -661,7 +657,25 @@
     if (!toggle || !dropdown) return;
 
     function open() {
-        dropdown.style.display = 'block';
+        // On small screens use fixed positioning (calculate top from the button)
+        if (window.innerWidth < 640) {
+            var rect = toggle.getBoundingClientRect();
+            dropdown.style.position = 'fixed';
+            dropdown.style.top = (rect.bottom + 8) + 'px';
+            dropdown.style.left = '1rem';
+            dropdown.style.right = '1rem';
+            dropdown.style.width = 'auto';
+            dropdown.style.zIndex = '9999';
+            dropdown.style.display = 'block';
+        } else {
+            dropdown.style.position = 'absolute';
+            dropdown.style.left = '';
+            dropdown.style.right = '0';
+            dropdown.style.top = '';
+            dropdown.style.width = '';
+            dropdown.style.zIndex = '';
+            dropdown.style.display = 'block';
+        }
         requestAnimationFrame(function() {
             dropdown.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
             dropdown.classList.add('opacity-100', 'scale-100');
@@ -674,7 +688,16 @@
         dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
         toggle.setAttribute('aria-expanded', 'false');
         if (chevron) chevron.style.transform = '';
-        setTimeout(function() { dropdown.style.display = 'none'; }, 150);
+        setTimeout(function() {
+            dropdown.style.display = 'none';
+            // reset mobile positioning
+            dropdown.style.left = '';
+            dropdown.style.right = '';
+            dropdown.style.width = '';
+            dropdown.style.top = '';
+            dropdown.style.position = '';
+            dropdown.style.zIndex = '';
+        }, 150);
     }
 
     var isOpen = false;
@@ -687,72 +710,19 @@
     dropdown.addEventListener('click', function(e) { e.stopPropagation(); });
 })();
 
-// ── Filtro búsqueda cliente ──────────────────────────────────────
-function filtrarTabla(query) {
-    var q = query.toLowerCase().trim();
-    var ayudaSeleccionada = (document.getElementById('filtro-ayuda') || {}).value || '';
-
-    var inp = document.getElementById('buscador-iglesias');
-    if (inp && inp.value !== query) inp.value = query;
-
-    var btnClear = document.getElementById('btn-clear');
-    if (btnClear) btnClear.classList.toggle('hidden', q.length === 0);
-
-    // Detectar búsqueda de datos jurídicos
-    var esBusquedaJuridica = q.length > 2 && (
-        q.includes('juridic') || q.includes('jur\u00eddic') ||
-        q.includes('datos jur') || q.includes('registrad') ||
-        q.includes('personeria') || q.includes('person\u00e9r') ||
-        q.includes('resoluc') || q.includes('personali')
-    );
-
-    // Tabla
-    var filas = document.querySelectorAll('.iglesia-row-data');
-    var visiblesTabla = 0;
-    filas.forEach(function(fila) {
-        var txt = !q || fila.dataset.nombre.includes(q) || fila.dataset.denominacion.includes(q) ||
-                  fila.dataset.pastor.includes(q) || fila.dataset.comuna.includes(q) ||
-                  (fila.dataset.juridico || '').includes(q) ||
-                  (esBusquedaJuridica && fila.dataset.tieneJuridico === '1');
-        var ay  = !ayudaSeleccionada || (fila.dataset.ayudas || '').split(',').includes(ayudaSeleccionada);
-        var show = txt && ay;
-        fila.style.display = show ? '' : 'none';
-        if (show) visiblesTabla++;
-    });
-    var emptySearch = document.getElementById('empty-search');
-    if (emptySearch) emptySearch.classList.toggle('hidden', !(filas.length > 0 && visiblesTabla === 0));
-
-    // Cards
-    var cards = document.querySelectorAll('.card-filtrable');
-    var visiblesCards = 0;
-    cards.forEach(function(card) {
-        var txt = !q || card.dataset.nombre.includes(q) || card.dataset.denominacion.includes(q) ||
-                  card.dataset.pastor.includes(q) || card.dataset.comuna.includes(q) ||
-                  (card.dataset.juridico || '').includes(q) ||
-                  (esBusquedaJuridica && card.dataset.tieneJuridico === '1');
-        var ay  = !ayudaSeleccionada || (card.dataset.ayudas || '').split(',').includes(ayudaSeleccionada);
-        var show = txt && ay;
-        card.style.display = show ? '' : 'none';
-        if (show) visiblesCards++;
-    });
-    var emptyMobile = document.getElementById('empty-search-mobile');
-    if (emptyMobile) emptyMobile.classList.toggle('hidden', !(cards.length > 0 && visiblesCards === 0));
-}
-
-function limpiarBusqueda() {
-    filtrarTabla('');
+// ── Búsqueda server-side: submit del formulario con debounce ─────────────────
+(function(){
+    var timeout = null;
     var input = document.getElementById('buscador-iglesias');
-    if (input) input.focus();
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    var filtroAyuda = document.getElementById('filtro-ayuda');
-    if (filtroAyuda) {
-        filtroAyuda.addEventListener('change', function() {
-            filtrarTabla((document.getElementById('buscador-iglesias') || {}).value || '');
-        });
-    }
-});
+    var form  = document.getElementById('form-buscador');
+    if (!input || !form) return;
+    input.addEventListener('input', function(){
+        clearTimeout(timeout);
+        timeout = setTimeout(function(){ form.submit(); }, 700);
+    });
+    // enviar al presionar Enter inmediatamente
+    input.addEventListener('keydown', function(e){ if (e.key === 'Enter') { e.preventDefault(); form.submit(); } });
+})();
 </script>
 @endpush
 

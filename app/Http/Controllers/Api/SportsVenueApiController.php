@@ -12,7 +12,7 @@ class SportsVenueApiController extends Controller
     {
         $venues = SportsVenue::select([
                 'id', 'name', 'address', 'latitude', 'longitude',
-                'contact', 'available_for_churches',
+                'contact', 'available_for_churches', 'imagen_principal',
             ])
             ->get()
             ->map(fn($v) => [
@@ -23,6 +23,7 @@ class SportsVenueApiController extends Controller
                 'longitude'              => (float) $v->longitude,
                 'contact'                => $v->contact,
                 'available_for_churches' => (bool) $v->available_for_churches,
+                'imagen_principal'       => $v->imagen_principal ? asset('storage/' . $v->imagen_principal) : null,
             ]);
 
         return response()->json(['success' => true, 'data' => $venues]);

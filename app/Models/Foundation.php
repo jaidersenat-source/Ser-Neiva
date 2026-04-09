@@ -16,6 +16,7 @@ class Foundation extends Model
         'address',
         'latitude',
         'longitude',
+        'imagen_principal',
     ];
 
     protected $casts = [

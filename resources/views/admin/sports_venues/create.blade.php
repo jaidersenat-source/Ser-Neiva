@@ -70,7 +70,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.sports_venues.store') }}" method="POST" novalidate>
+    <form action="{{ route('admin.sports_venues.store') }}" method="POST" enctype="multipart/form-data" novalidate>
         @csrf
         @include('admin.sports_venues._form')
 

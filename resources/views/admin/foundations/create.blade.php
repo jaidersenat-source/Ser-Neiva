@@ -64,7 +64,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.foundations.store') }}" method="POST" novalidate>
+    <form action="{{ route('admin.foundations.store') }}" method="POST" enctype="multipart/form-data" novalidate>
         @csrf
         @include('admin.foundations._form')
 

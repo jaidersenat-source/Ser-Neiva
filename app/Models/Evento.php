@@ -7,7 +7,8 @@ class Evento extends Model
 {
     protected $fillable = [
         'iglesia_id', 'titulo', 'descripcion', 'fecha_inicio', 'fecha_fin',
-        'direccion_evento', 'latitud', 'longitud', 'tipo_evento', 'estado'
+        'direccion_evento', 'latitud', 'longitud', 'tipo_evento', 'estado',
+        'imagen_principal'
     ];
 
     public function iglesia()

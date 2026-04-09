@@ -40,12 +40,18 @@
 
             {{-- LEFT: avatar + info --}}
             <div class="flex items-start gap-4 min-w-0">
-                {{-- Avatar con inicial (sin imagen) --}}
-                <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-2xl flex items-center justify-center
-                            text-3xl font-extrabold text-white shadow-lg"
-                     style="background: rgba(255,255,255,0.18); backdrop-filter: blur(8px);
-                            border: 2px solid rgba(255,255,255,0.25);">
-                    {{ strtoupper(substr($evento->titulo, 0, 1)) }}
+                {{-- Avatar: mostrar imagen principal si existe, si no letra inicial --}}
+                <div class="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg"
+                     style="background: rgba(255,255,255,0.18); backdrop-filter: blur(8px); border: 2px solid rgba(255,255,255,0.25);">
+                    @if($evento->imagen_principal)
+                        <img src="{{ asset('storage/' . $evento->imagen_principal) }}"
+                             alt="Imagen del evento" class="w-full h-full object-cover block"/>
+                    @else
+                        <div class="w-full h-full flex items-center justify-center text-3xl font-extrabold text-white"
+                             style="background: transparent;">
+                            {{ strtoupper(substr($evento->titulo, 0, 1)) }}
+                        </div>
+                    @endif
                 </div>
 
                 <div class="min-w-0 pt-1">
@@ -503,13 +509,15 @@ document.addEventListener('DOMContentLoaded', function () {
         iconSize: [34,34], iconAnchor: [17,34], popupAnchor: [0,-38],
     });
 
-    L.marker([lat, lng], { icon }).addTo(map).bindPopup(
-        `<div style="font-family:system-ui,sans-serif;min-width:190px;padding:2px 0;">
-            <p style="font-weight:700;color:#4C1D95;font-size:13px;margin:0 0 4px;">${title}</p>
-            ${ig ? `<span style="display:inline-block;background:#EDE9FE;color:#5B21B6;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:6px;">${ig}</span><br>` : ''}
-            <p style="font-size:11px;color:#64748B;margin:0;">📍 ${addr}</p>
-         </div>`, { maxWidth: 280 }
-    ).openPopup();
+    const imageUrl = @json($evento->imagen_principal ? asset('storage/' . $evento->imagen_principal) : null);
+    const popupHtml = `<div style="font-family:system-ui,sans-serif;min-width:190px;padding:6px;">
+            ${imageUrl ? `<div style="width:100%;height:110px;overflow:hidden;border-radius:8px;margin-bottom:8px"><img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;display:block"/></div>` : ''}
+            <p style="font-weight:700;color:#4C1D95;font-size:13px;margin:0 0 6px;">${title}</p>
+            ${ig ? `<div style="margin-bottom:6px"><span style="display:inline-block;background:#EDE9FE;color:#5B21B6;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">${ig}</span></div>` : ''}
+            <p style="font-size:12px;color:#64748B;margin:0;">📍 ${addr}</p>
+         </div>`;
+
+    L.marker([lat, lng], { icon }).addTo(map).bindPopup(popupHtml, { maxWidth: 280 }).openPopup();
 
     /* ── Modal eliminar ─────────────────────────────────────── */
     var modal    = document.getElementById('modal-eliminar-show');

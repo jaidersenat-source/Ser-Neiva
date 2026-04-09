@@ -20,14 +20,28 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * Determina si el login es modo iglesia (username) o admin (email).
+     */
+    public function modoIglesia(): bool
+    {
+        return $this->input('login_mode') === 'iglesia';
+    }
+
+    /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
+        if ($this->modoIglesia()) {
+            return [
+                'email'      => ['required', 'string', 'min:3', 'max:60'],
+                'password'   => ['required', 'string'],
+                'login_mode' => ['required', 'string'],
+            ];
+        }
+
         return [
-            'email' => ['required', 'string', 'email'],
+            'email'    => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,11 +55,38 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if ($this->modoIglesia()) {
+            // Busca por username en lugar de email
+            $credentials = [
+                'username' => $this->input('email'),
+                'password' => $this->input('password'),
+            ];
+        } else {
+            $credentials = $this->only('email', 'password');
+        }
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
+            ]);
+        }
+
+        // Verificar que el rol coincide con el modo seleccionado
+        $user = Auth::user();
+        if ($this->modoIglesia() && ! $user->isIglesia()) {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+            throw ValidationException::withMessages([
+                'email' => 'Esta cuenta no tiene acceso como iglesia.',
+            ]);
+        }
+        if (! $this->modoIglesia() && $user->isIglesia()) {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+            throw ValidationException::withMessages([
+                'email' => 'Usa el modo Iglesia para acceder con este usuario.',
             ]);
         }
 
@@ -80,6 +121,11 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        // Para iglesias usamos el username como clave de throttle
+        $identifier = $this->modoIglesia()
+            ? $this->string('email')
+            : $this->string('email');
+
+        return Str::transliterate(Str::lower($identifier).'|'.$this->ip());
     }
 }

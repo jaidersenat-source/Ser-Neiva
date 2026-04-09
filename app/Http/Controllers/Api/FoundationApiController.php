@@ -12,7 +12,7 @@ class FoundationApiController extends Controller
     {
         $foundations = Foundation::select([
                 'id', 'name', 'nit', 'representative',
-                'phone', 'email', 'address', 'latitude', 'longitude',
+                'phone', 'email', 'address', 'latitude', 'longitude', 'imagen_principal',
             ])
             ->get()
             ->map(fn($f) => [
@@ -25,6 +25,7 @@ class FoundationApiController extends Controller
                 'address'        => $f->address,
                 'latitude'       => (float) $f->latitude,
                 'longitude'      => (float) $f->longitude,
+                'imagen_principal' => $f->imagen_principal ? asset('storage/' . $f->imagen_principal) : null,
             ]);
 
         return response()->json(['success' => true, 'data' => $foundations]);

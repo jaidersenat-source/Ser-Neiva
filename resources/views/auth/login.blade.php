@@ -106,17 +106,27 @@
             @endif
 
             {{-- Formulario --}}
+
+            {{-- Selector de tipo de acceso: Admin / Iglesia --}}
+            <div class="access-mode">
+                <div class="label">Acceso</div>
+                <button type="button" id="btn-mode-admin" class="mode-btn-small active" onclick="setLoginMode('admin')">Admin</button>
+                <button type="button" id="btn-mode-iglesia" class="mode-btn-small" onclick="setLoginMode('iglesia')">Iglesia</button>
+            </div>
+
             <form method="POST" action="{{ route('login') }}" novalidate>
                 @csrf
+                {{-- Enviado dentro del form para que llegue al servidor --}}
+                <input type="hidden" id="login_mode" name="login_mode" value="admin">
 
-                {{-- Email --}}
+                {{-- Email / Usuario (se alterna según modo) --}}
                 <div class="field">
-                    <label class="field-label" for="email">Correo electrónico</label>
+                    <label id="label-identifier" class="field-label" for="email">Correo electrónico</label>
                     <div class="field-input-wrap">
                         <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
-                        <input id="email" name="email" type="email"
+                           <input id="email" name="email" type="email"
                                class="field-input {{ $errors->get('email') ? 'border-red-400 bg-red-50' : '' }}"
                                value="{{ old('email') }}"
                                placeholder="admin@ser.gov.co"
@@ -219,6 +229,42 @@
         open.classList.toggle('hidden',  !isText);
         closed.classList.toggle('hidden', isText);
     }
+
+    // Alternar modo de login: 'admin' (email) o 'iglesia' (usuario)
+    function setLoginMode(mode) {
+        const btnAdmin = document.getElementById('btn-mode-admin');
+        const btnIgl   = document.getElementById('btn-mode-iglesia');
+        const label    = document.getElementById('label-identifier');
+        const input    = document.getElementById('email');
+        const hidden   = document.getElementById('login_mode');
+
+        if (!label || !input || !hidden) return;
+
+        if (mode === 'iglesia') {
+            btnAdmin.classList.remove('active');
+            btnIgl.classList.add('active');
+
+            label.textContent = 'Usuario';
+            input.type = 'text';
+            input.placeholder = 'usuario';
+            input.autocomplete = 'username';
+            hidden.value = 'iglesia';
+        } else {
+            btnIgl.classList.remove('active');
+            btnAdmin.classList.add('active');
+
+            label.textContent = 'Correo electrónico';
+            input.type = 'email';
+            input.placeholder = 'admin@ser.gov.co';
+            input.autocomplete = 'username';
+            hidden.value = 'admin';
+        }
+        // focus en el input luego del cambio
+        setTimeout(() => input.focus(), 80);
+    }
+
+    // Inicializar (por defecto admin)
+    document.addEventListener('DOMContentLoaded', () => setLoginMode('admin'));
 </script>
 
 </body>

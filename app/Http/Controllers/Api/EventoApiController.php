@@ -22,6 +22,7 @@ class EventoApiController extends Controller
                 'tipo_evento'      => $evento->tipo_evento,
                 'direccion_evento' => $evento->direccion_evento,
                 'estado'           => $evento->estado,
+                'imagen_principal' => $evento->imagen_principal ? asset('storage/' . $evento->imagen_principal) : null,
             ],
         ];
     }
@@ -53,11 +54,15 @@ class EventoApiController extends Controller
 
         // Adaptar formato para FullCalendar
         $result = $eventos->map(function($evento) {
+            // Normalizar a la zona adecuada (si app.timezone es UTC usamos America/Bogota)
+            $tz = config('app.timezone') === 'UTC' ? 'America/Bogota' : config('app.timezone');
             return [
                 'id' => $evento->id,
                 'title' => $evento->titulo,
-                'start' => $evento->fecha_inicio->toIso8601String(),
-                'end' => $evento->fecha_fin ? $evento->fecha_fin->toIso8601String() : null,
+                'start' => $evento->fecha_inicio ? $evento->fecha_inicio->setTimezone($tz)->toIso8601String() : null,
+                'end' => $evento->fecha_fin ? $evento->fecha_fin->setTimezone($tz)->toIso8601String() : null,
+                'start_ts' => $evento->fecha_inicio ? $evento->fecha_inicio->setTimezone($tz)->getTimestamp() * 1000 : null,
+                'end_ts' => $evento->fecha_fin ? $evento->fecha_fin->setTimezone($tz)->getTimestamp() * 1000 : null,
                 'tipo_evento' => $evento->tipo_evento,
                 'extendedProps' => [
                     'iglesia' => $evento->iglesia->official_name ?? null,
@@ -65,6 +70,7 @@ class EventoApiController extends Controller
                     'latitud' => $evento->latitud,
                     'longitud' => $evento->longitud,
                     'estado' => $evento->estado,
+                    'imagen_principal' => $evento->imagen_principal ? asset('storage/' . $evento->imagen_principal) : null,
                 ],
             ];
         });

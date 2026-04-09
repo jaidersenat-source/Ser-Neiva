@@ -508,6 +508,39 @@
             </div>
         </div>
 
+        {{-- ── ACCESO AL PORTAL ── --}}
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-50" style="background:#F8FAFF;">
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                     style="background:linear-gradient(135deg,#7C3AED,#A855F7);">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                    </svg>
+                </div>
+                <p class="text-sm font-bold text-slate-800">Acceso al portal</p>
+            </div>
+            <div class="p-4 space-y-3">
+                @if($linkedUser)
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400">Usuario</p>
+                            <p class="text-sm font-semibold text-slate-800">{{ $linkedUser->username }}</p>
+                        </div>
+                        <a href="{{ route('admin.iglesias.edit', $iglesia) }}" class="text-xs font-semibold px-3 py-2 rounded-lg bg-violet-50 text-violet-700 border border-violet-100">
+                            Editar credenciales
+                        </a>
+                    </div>
+                    <p class="text-xs text-slate-400">Contraseña: <span class="font-semibold">(no se muestra por seguridad)</span></p>
+                @else
+                    <p class="text-sm text-slate-600">Sin cuenta de acceso configurada.</p>
+                    <a href="{{ route('admin.iglesias.edit', $iglesia) }}" class="inline-flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg bg-violet-50 text-violet-700 border border-violet-100">
+                        Crear credenciales
+                    </a>
+                @endif
+            </div>
+        </div>
+
         {{-- ── UBICACIÓN ── --}}
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
             <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-50" style="background:#F0FDF4;">
@@ -529,8 +562,7 @@
                         ['label'=>'Comuna',        'value'=>$iglesia->comuna ?? null],
                         ['label'=>'Municipio',     'value'=>$iglesia->municipality ?? null],
                         ['label'=>'Ciudad',        'value'=>$iglesia->city ?? 'Neiva'],
-                        ['label'=>'Departamento',  'value'=>$iglesia->department ?? 'Huila'],
-                        ['label'=>'País',          'value'=>$iglesia->country ?? 'Colombia'],
+                        
                     ];
                 @endphp
                 @foreach($ubicItems as $u)

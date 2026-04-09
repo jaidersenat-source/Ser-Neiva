@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * App\Models\User
+ *
+ * @method bool isAdmin()
+ * @method bool isEditorHuila()
+ * @method bool isIglesia()
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -19,9 +26,11 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
         'role',
+        'iglesia_id',
     ];
 
     /**
@@ -55,5 +64,15 @@ class User extends Authenticatable
     public function isEditorHuila(): bool
     {
         return $this->role === 'editor_huila';
+    }
+
+    public function isIglesia(): bool
+    {
+        return $this->role === 'iglesia';
+    }
+
+    public function iglesia(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Iglesia::class);
     }
 }

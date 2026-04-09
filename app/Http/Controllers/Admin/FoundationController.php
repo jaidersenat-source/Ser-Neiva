@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\FoundationRequest;
 use App\Models\Foundation;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class FoundationController extends Controller
@@ -29,7 +30,13 @@ class FoundationController extends Controller
 
     public function store(FoundationRequest $request): RedirectResponse
     {
-        $foundation = Foundation::create($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('imagen_principal')) {
+            $data['imagen_principal'] = $request->file('imagen_principal')->store('foundations', 'public');
+        }
+
+        $foundation = Foundation::create($data);
 
         return redirect()
             ->route('admin.foundations.index')
@@ -43,7 +50,17 @@ class FoundationController extends Controller
 
     public function update(FoundationRequest $request, Foundation $foundation): RedirectResponse
     {
-        $foundation->update($request->validated());
+        $data = $request->validated();
+
+        if ($request->hasFile('imagen_principal')) {
+            // eliminar imagen anterior si existe
+            if ($foundation->imagen_principal) {
+                Storage::disk('public')->delete($foundation->imagen_principal);
+            }
+            $data['imagen_principal'] = $request->file('imagen_principal')->store('foundations', 'public');
+        }
+
+        $foundation->update($data);
 
         return redirect()
             ->route('admin.foundations.index')
@@ -53,6 +70,9 @@ class FoundationController extends Controller
     public function destroy(Foundation $foundation): RedirectResponse
     {
         $nombre = $foundation->name;
+        if ($foundation->imagen_principal) {
+            Storage::disk('public')->delete($foundation->imagen_principal);
+        }
         $foundation->delete();
 
         return redirect()

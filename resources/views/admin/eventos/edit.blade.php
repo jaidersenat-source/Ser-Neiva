@@ -104,8 +104,8 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.eventos.update', $evento) }}" method="POST"
-          novalidate id="form-editar-evento">
+        <form action="{{ route('admin.eventos.update', $evento) }}" method="POST"
+            novalidate id="form-editar-evento" enctype="multipart/form-data">
         @csrf
         @method('PUT')
         @include('admin.eventos._form')

@@ -8,15 +8,29 @@ use App\Http\Controllers\Admin\SportsVenueController;
 use App\Http\Controllers\MapaController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\EventoController;
+use App\Http\Controllers\Admin\EmprendimientoController;
+use App\Http\Controllers\DecretoController;
 
-// Redirección raíz
-Route::get('/', fn() => redirect()->route('mapa.index'));
+// Página de inicio pública (pasar coordenadas para preview del mapa)
+Route::get('/', function () {
+    $points = \App\Models\Iglesia::whereNotNull('latitud')
+        ->whereNotNull('longitud')
+        ->limit(200)
+        ->get(['latitud', 'longitud'])
+        ->map(function ($i) {
+            return [$i->latitud, $i->longitud];
+        })->toArray();
+
+    return view('home', ['previewPoints' => $points]);
+})->name('home');
 
 // Mapa público (sin autenticación)
 Route::get('/mapa', [MapaController::class, 'index'])->name('mapa.index');
 
 // Panel Administrativo (requiere autenticación)
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(function () {
+use App\Http\Middleware\EnsureIsAdmin;
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', EnsureIsAdmin::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
    
@@ -31,8 +45,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(
     Route::get('/iglesias/import/template', [IglesiaController::class, 'importTemplate'])
         ->name('iglesias.import.template');
 
+    // === CREDENCIALES DE ACCESO AL PORTAL ===
+    Route::post('/iglesias/{iglesia}/credentials', [IglesiaController::class, 'setCredentials'])
+        ->name('iglesias.credentials');
+
          // Recursos estándar para iglesias
     Route::resource('iglesias', IglesiaController::class);
+
+        // === EMPRENDIMIENTOS ===
+        Route::resource('emprendimientos', EmprendimientoController::class);
 
     // === EVENTOS ===
     Route::resource('eventos',EventoController::class);
@@ -51,9 +72,27 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified'])->group(
 });
 
 // Reemplaza la ruta dashboard por defecto de Breeze
-Route::get('/dashboard', fn() => redirect()->route('admin.dashboard'))
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+Route::get('/dashboard', function () {
+    if (auth()->user()?->isIglesia()) {
+        return redirect()->route('iglesia.dashboard');
+    }
+    return redirect()->route('admin.dashboard');
+})->middleware(['auth'])->name('dashboard');
+
+// ══ Portal Iglesia ══
+Route::prefix('iglesia')->name('iglesia.')->middleware(['auth', 'role.iglesia'])->group(function () {
+    Route::get('/dashboard',          [\App\Http\Controllers\Iglesia\IglesiaPortalController::class, 'dashboard'])->name('dashboard');
+    Route::resource('eventos',        \App\Http\Controllers\Iglesia\IglesiaEventoController::class);
+    Route::resource('emprendimientos',\App\Http\Controllers\Iglesia\IglesiaEmprendimientoController::class);
+    // Mostrar perfil del usuario autenticado (primera vista al pulsar "Perfil")
+    Route::get('/perfil',             [\App\Http\Controllers\Iglesia\IglesiaPortalController::class, 'showOwn'])->name('perfil.index');
+    // Editar perfil
+    Route::get('/perfil/edit',        [\App\Http\Controllers\Iglesia\IglesiaPortalController::class, 'editPerfil'])->name('perfil.edit');
+    // Actualizar perfil (mantener PUT en /perfil)
+    Route::put('/perfil',             [\App\Http\Controllers\Iglesia\IglesiaPortalController::class, 'updatePerfil'])->name('perfil.update');
+    // Mostrar perfil público/portal de una iglesia (acepta parámetro de modelo)
+    Route::get('/perfil/{iglesia}',   [\App\Http\Controllers\Iglesia\IglesiaPortalController::class, 'show'])->name('perfil.show');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/perfil', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
@@ -69,5 +108,11 @@ Route::prefix('iglesias/export')
         Route::get('pdf',   'pdf')   ->name('pdf');
         Route::get('excel', 'excel') ->name('excel');
     });
+
+    // === NORMATIVIDAD (pública) ===
+Route::get('normatividad', [DecretoController::class, 'index'])->name('decretos.index');
+Route::get('normatividad/{slug}', [DecretoController::class, 'show'])->name('decretos.show');
+Route::get('normatividad/{id}/stream', [DecretoController::class, 'streamInline'])->name('decretos.stream');
+Route::get('normatividad/{id}/download', [DecretoController::class, 'download'])->name('decretos.download');
 
 require __DIR__ . '/auth.php';

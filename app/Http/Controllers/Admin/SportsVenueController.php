@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SportsVenueRequest;
 use App\Models\SportsVenue;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -32,6 +33,11 @@ class SportsVenueController extends Controller
         $data = $request->validated();
         $data['available_for_churches'] = $request->boolean('available_for_churches');
 
+        if ($request->hasFile('imagen_principal')) {
+            $path = $request->file('imagen_principal')->store('sports_venues', 'public');
+            $data['imagen_principal'] = $path;
+        }
+
         SportsVenue::create($data);
 
         return redirect()
@@ -50,6 +56,15 @@ class SportsVenueController extends Controller
     {
         $data = $request->validated();
         $data['available_for_churches'] = $request->boolean('available_for_churches');
+
+        if ($request->hasFile('imagen_principal')) {
+            // Eliminar imagen previa si existe
+            if ($sports_venue->imagen_principal) {
+                Storage::disk('public')->delete($sports_venue->imagen_principal);
+            }
+            $path = $request->file('imagen_principal')->store('sports_venues', 'public');
+            $data['imagen_principal'] = $path;
+        }
 
         $sports_venue->update($data);
 

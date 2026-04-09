@@ -122,6 +122,11 @@ class Iglesia extends Model
         return $this->hasMany(Evento::class);
     }
 
+    public function emprendimientos()
+    {
+        return $this->hasMany(\App\Models\Emprendimiento::class);
+    }
+
     public function getContactEmail(): ?string
     {
         return ($this->pastor_email ?: null)

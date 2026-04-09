@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\IglesiaRequest;
 use App\Models\Ayuda;
 use App\Models\Iglesia;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use App\Imports\IglesiasImport;
-use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 
@@ -19,6 +22,20 @@ class IglesiaController extends Controller
     public function index(\Illuminate\Http\Request $request): View
     {
         $query = Iglesia::with('ayudas')->latest();
+
+        // Búsqueda por texto en varios campos (server-side) para cubrir todas las páginas
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function ($sub) use ($q) {
+                $sub->where('official_name', 'like', "%{$q}%")
+                    ->orWhere('pastor_full_name', 'like', "%{$q}%")
+                    ->orWhere('denomination', 'like', "%{$q}%")
+                    ->orWhere('specific_location', 'like', "%{$q}%")
+                    ->orWhere('municipality', 'like', "%{$q}%")
+                    ->orWhere('legal_registration_number', 'like', "%{$q}%")
+                    ->orWhere('legal_registration_type', 'like', "%{$q}%");
+            });
+        }
 
         if ($request->filled('municipality')) {
             $query->where('municipality', $request->municipality);
@@ -78,7 +95,12 @@ class IglesiaController extends Controller
     {
         $iglesia->load('ayudas');
 
-        return view('admin.iglesias.show', compact('iglesia'));
+        $linkedUser = User::where('iglesia_id', $iglesia->id)->first();
+
+        return view('admin.iglesias.show', [
+            'iglesia'    => $iglesia,
+            'linkedUser' => $linkedUser,
+        ]);
     }
 
     // ── Editar ────────────────────────────────────────────────
@@ -92,6 +114,7 @@ class IglesiaController extends Controller
             'iglesia'        => $iglesia,
             'ayudas'         => Ayuda::orderBy('nombre')->get(),
             'ayudasActuales' => $iglesia->ayudas->pluck('id')->toArray(),
+            'linkedUser'     => User::where('iglesia_id', $iglesia->id)->first(),
         ]);
     }
 
@@ -134,6 +157,60 @@ class IglesiaController extends Controller
         return redirect()
             ->route('admin.iglesias.index')
             ->with('success', "Iglesia «{$nombre}» eliminada correctamente.");
+    }
+
+    // ── Credenciales de acceso al portal ──────────────────────
+    public function setCredentials(Request $request, Iglesia $iglesia): RedirectResponse
+    {
+        $this->authorize('update', $iglesia);
+
+        $linkedUser = User::where('iglesia_id', $iglesia->id)->first();
+        $userId     = $linkedUser?->id;
+
+        $rules = [
+            'username' => [
+                'required', 'string', 'min:3', 'max:50',
+                'regex:/^[a-zA-Z0-9._]+$/',
+                Rule::unique('users', 'username')->ignore($userId),
+            ],
+            'password' => [
+                $linkedUser ? 'nullable' : 'required',
+                'nullable', 'string', 'min:8', 'confirmed',
+            ],
+        ];
+
+        $messages = [
+            'username.required'  => 'El nombre de usuario es obligatorio.',
+            'username.min'       => 'El usuario debe tener al menos 3 caracteres.',
+            'username.max'       => 'El usuario no puede superar 50 caracteres.',
+            'username.regex'     => 'Solo se permiten letras, números, puntos y guiones bajos.',
+            'username.unique'    => 'Ese nombre de usuario ya está en uso.',
+            'password.required'  => 'La contraseña es obligatoria al crear el acceso por primera vez.',
+            'password.min'       => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'La confirmación de contraseña no coincide.',
+        ];
+
+        $validated = $request->validate($rules, $messages);
+
+        if (!$linkedUser) {
+            $linkedUser             = new User();
+            $linkedUser->email      = 'iglesia_' . $iglesia->id . '@portal.local';
+            $linkedUser->role       = 'iglesia';
+            $linkedUser->iglesia_id = $iglesia->id;
+            $linkedUser->name       = $iglesia->official_name ?? 'Iglesia';
+        }
+
+        $linkedUser->username = $validated['username'];
+
+        if (!empty($validated['password'])) {
+            $linkedUser->password = Hash::make($validated['password']);
+        }
+
+        $linkedUser->save();
+
+        return redirect()
+            ->route('admin.iglesias.edit', $iglesia)
+            ->with('success_credentials', 'Credenciales de acceso guardadas correctamente.');
     }
 
     public function import()

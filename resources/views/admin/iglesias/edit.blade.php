@@ -186,6 +186,129 @@
             </div>
         </div>
     </form>
+
+    {{-- ══════════════════════════════════════════════════════════════
+         SECCIÓN INDEPENDIENTE: Credenciales de acceso al portal
+    ══════════════════════════════════════════════════════════════ --}}
+    @if(session('success_credentials'))
+        <div class="mt-5 rounded-2xl px-5 py-3 flex items-center gap-3 border"
+             style="background:#F0FDF4; border-color:#BBF7D0;">
+            <svg class="w-4 h-4 flex-shrink-0" style="color:#16A34A;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            <p class="text-sm font-semibold" style="color:#15803D;">{{ session('success_credentials') }}</p>
+        </div>
+    @endif
+
+    <div class="mt-6 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        {{-- Header --}}
+        <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-50" style="background:#F8FAFF;">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                 style="background: linear-gradient(135deg, #7C3AED, #A855F7);">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                </svg>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-slate-800">Acceso al portal</p>
+                <p class="text-xs text-slate-400">
+                    @if($linkedUser)
+                        Cuenta activa — usuario: <strong class="text-violet-600">{{ $linkedUser->username }}</strong>
+                    @else
+                        Sin cuenta de acceso configurada
+                    @endif
+                </p>
+            </div>
+            @if($linkedUser)
+                <span class="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                      style="background:#F3E8FF; color:#7C3AED;">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    Activo
+                </span>
+            @endif
+        </div>
+
+        <form action="{{ route('admin.iglesias.credentials', $iglesia) }}" method="POST"
+              class="p-5 space-y-4">
+            @csrf
+
+            {{-- Errores de credenciales --}}
+            @if($errors->has('username') || $errors->has('password') || $errors->has('password_confirmation'))
+                <div class="rounded-xl border px-4 py-3" style="background:#FFF1F2; border-color:#FECDD3;">
+                    <p class="text-xs font-bold text-red-600 mb-1">Corrige los siguientes errores:</p>
+                    <ul class="space-y-0.5">
+                        @foreach(['username','password','password_confirmation'] as $field)
+                            @error($field)
+                                <li class="text-xs text-red-500">• {{ $message }}</li>
+                            @enderror
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {{-- Username --}}
+                <div class="sm:col-span-1">
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                        Nombre de usuario *
+                    </label>
+                    <input type="text" name="username"
+                           value="{{ old('username', $linkedUser->username ?? '') }}"
+                           autocomplete="off" spellcheck="false"
+                           placeholder="ej: iglesia_central"
+                           class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm
+                                  text-slate-700 font-medium placeholder-slate-300 outline-none transition-all
+                                  focus:border-violet-400 focus:ring-2 focus:ring-violet-400/10
+                                  {{ $errors->has('username') ? 'border-red-300 bg-red-50' : '' }}">
+                </div>
+
+                {{-- Password --}}
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                        Contraseña {{ $linkedUser ? '(dejar vacío = sin cambios)' : '*' }}
+                    </label>
+                    <input type="password" name="password"
+                           autocomplete="new-password"
+                           placeholder="{{ $linkedUser ? '••••••••' : 'Mínimo 8 caracteres' }}"
+                           class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm
+                                  text-slate-700 font-medium placeholder-slate-300 outline-none transition-all
+                                  focus:border-violet-400 focus:ring-2 focus:ring-violet-400/10
+                                  {{ $errors->has('password') ? 'border-red-300 bg-red-50' : '' }}">
+                </div>
+
+                {{-- Confirmar contraseña --}}
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                        Confirmar contraseña
+                    </label>
+                    <input type="password" name="password_confirmation"
+                           autocomplete="new-password"
+                           placeholder="Repetir contraseña"
+                           class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm
+                                  text-slate-700 font-medium placeholder-slate-300 outline-none transition-all
+                                  focus:border-violet-400 focus:ring-2 focus:ring-violet-400/10">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 pt-1">
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white
+                               rounded-xl shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 active:scale-95"
+                        style="background: linear-gradient(135deg, #7C3AED, #A855F7);">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {{ $linkedUser ? 'Actualizar credenciales' : 'Crear acceso' }}
+                </button>
+                <p class="text-xs text-slate-400">
+                    La iglesia usa su usuario y contraseña para ingresar al portal propio.
+                </p>
+            </div>
+        </form>
+    </div>
 </div>
 
 @push('scripts')

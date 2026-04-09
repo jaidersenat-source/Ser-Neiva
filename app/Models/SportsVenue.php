@@ -13,6 +13,7 @@ class SportsVenue extends Model
         'longitude',
         'contact',
         'available_for_churches',
+        'imagen_principal',
     ];
 
     protected $casts = [

@@ -11,6 +11,22 @@ class EventoController extends Controller
 {
     public function index()
     {
+        // Eliminar eventos pasados automáticamente (mismo comportamiento que en módulo Iglesia)
+        $now = now();
+        $oldEvents = Evento::where(function ($q) use ($now) {
+            $q->whereNotNull('fecha_fin')->where('fecha_fin', '<', $now);
+        })->orWhere(function ($q) use ($now) {
+            $q->whereNull('fecha_fin')->whereNotNull('fecha_inicio')->where('fecha_inicio', '<', $now);
+        })->get();
+
+        // Borrar archivos asociados y luego los registros
+        foreach ($oldEvents as $old) {
+            if ($old->imagen_principal) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($old->imagen_principal);
+            }
+            $old->delete();
+        }
+
         $eventos = Evento::with('iglesia')->latest()->paginate(20);
         return view('admin.eventos.index', compact('eventos'));
     }
@@ -37,7 +53,12 @@ class EventoController extends Controller
             'longitud'        => 'required|numeric',
             'tipo_evento'     => 'required|string|max:100',
             'estado'          => 'required|string|max:50',
+            'imagen_principal'=> 'nullable|image|max:2048',
         ]);
+        if ($request->hasFile('imagen_principal')) {
+            $data['imagen_principal'] = $request->file('imagen_principal')->store('eventos', 'public');
+        }
+
         Evento::create($data);
         return redirect()->route('admin.eventos.index')->with('success', 'Evento creado correctamente.');
     }
@@ -70,7 +91,15 @@ class EventoController extends Controller
             'longitud'        => 'required|numeric',
             'tipo_evento'     => 'required|string|max:100',
             'estado'          => 'required|string|max:50',
+            'imagen_principal'=> 'nullable|image|max:2048',
         ]);
+        if ($request->hasFile('imagen_principal')) {
+            if ($evento->imagen_principal) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($evento->imagen_principal);
+            }
+            $data['imagen_principal'] = $request->file('imagen_principal')->store('eventos', 'public');
+        }
+
         $evento->update($data);
         return redirect()->route('admin.eventos.index')->with('success', 'Evento actualizado correctamente.');
     }

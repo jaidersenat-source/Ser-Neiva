@@ -78,7 +78,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.foundations.update', $foundation) }}" method="POST" novalidate id="form-edit">
+    <form action="{{ route('admin.foundations.update', $foundation) }}" method="POST" enctype="multipart/form-data" novalidate id="form-edit">
         @csrf
         @method('PUT')
         @include('admin.foundations._form')

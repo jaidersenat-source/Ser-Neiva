@@ -273,3 +273,19 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         .form-box { animation: fadeUp .4s ease; }
+
+        /* Selector de modo de acceso (Admin / Iglesia) */
+        .access-mode {
+            display:flex; align-items:center; gap:8px; margin-bottom:14px;
+        }
+        .access-mode .label { font-size:13px; color:#64748b; font-weight:600; margin-right:8px; }
+        .mode-btn-small {
+            padding:8px 12px; border-radius:8px; border:1px solid #E6EEF8;
+            background: transparent; color: var(--primary-dk); font-weight:700; cursor:pointer;
+            font-size: .88rem;
+        }
+        .mode-btn-small.active {
+            background: linear-gradient(135deg, var(--primary-dk), var(--primary));
+            color: #fff;
+            box-shadow: 0 6px 14px rgba(30,58,138,.18);
+        }

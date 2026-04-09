@@ -168,6 +168,30 @@
             </div>
         </div>
 
+        {{-- Imagen del escenario (opcional) --}}
+        <div>
+            <label for="imagen_principal" class="{{ $lbl }}">Imagen del escenario</label>
+            <div class="flex items-center gap-3">
+                <input type="file" id="imagen_principal" name="imagen_principal" accept="image/*" class="text-sm">
+                <button type="button" id="btn-remove-image" class="text-xs text-red-500 hidden">Quitar</button>
+            </div>
+            <p class="text-xs text-slate-400 mt-1.5">Sube una imagen representativa del escenario (opcional). Tamaño máximo recomendado 2MB.</p>
+
+            @if(isset($venue) && ($venue->imagen_principal ?? $venue->image ?? false))
+                <div id="image-preview" class="mt-3 w-40 h-28 overflow-hidden rounded-lg border border-slate-200">
+                    <img src="{{ asset('storage/' . ($venue->imagen_principal ?? $venue->image)) }}" alt="Imagen" class="w-full h-full object-cover">
+                </div>
+            @else
+                <div id="image-preview" class="mt-3 w-40 h-28 overflow-hidden rounded-lg border border-slate-200 hidden">
+                    <img src="" alt="Imagen" class="w-full h-full object-cover">
+                </div>
+            @endif
+
+            @error('imagen_principal')
+                <p class="flex items-center gap-1.5 text-xs font-semibold text-red-500 mt-1.5">{{ $message }}</p>
+            @enderror
+        </div>
+
         {{-- Disponible para iglesias --}}
         <div class="pt-1">
             <label for="available_for_churches"
@@ -260,6 +284,32 @@
         checkbox.addEventListener('change', function() {
             var dot = this.closest('label').querySelector('.absolute.top-1.left-1');
             // La animación CSS peer-checked:translate-x-4 lo maneja solo
+        });
+    }
+})();
+
+// Imagen preview
+(function(){
+    var input = document.getElementById('imagen_principal');
+    var previewWrap = document.getElementById('image-preview');
+    var previewImg = previewWrap ? previewWrap.querySelector('img') : null;
+    var btnRemove = document.getElementById('btn-remove-image');
+
+    if (!input) return;
+
+    input.addEventListener('change', function(e){
+        var file = this.files && this.files[0];
+        if (!file) return;
+        var url = URL.createObjectURL(file);
+        if (previewImg) { previewImg.src = url; previewWrap.classList.remove('hidden'); }
+        if (btnRemove) btnRemove.classList.remove('hidden');
+    });
+
+    if (btnRemove) {
+        btnRemove.addEventListener('click', function(){
+            input.value = '';
+            if (previewImg) { previewImg.src = ''; previewWrap.classList.add('hidden'); }
+            this.classList.add('hidden');
         });
     }
 })();

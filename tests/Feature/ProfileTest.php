@@ -2,98 +2,151 @@
 
 namespace Tests\Feature;
 
+use App\Models\Iglesia;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Tests del portal de iglesias (Step 3-5).
+ * Cubre: autenticación dual, middlewares de rol y páginas del portal.
+ */
 class ProfileTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_profile_page_is_displayed(): void
+    // ─── helpers ────────────────────────────────────────────────
+
+    private function makeIglesia(): Iglesia
     {
-        $user = User::factory()->create();
-
-        $response = $this
-            ->actingAs($user)
-            ->get('/profile');
-
-        $response->assertOk();
+        return Iglesia::create([
+            'official_name' => 'Iglesia de Prueba',
+            'denomination'  => 'Evangélica',
+        ]);
     }
 
-    public function test_profile_information_can_be_updated(): void
+    private function makeIglesiaUser(Iglesia $iglesia): User
     {
-        $user = User::factory()->create();
-
-        $response = $this
-            ->actingAs($user)
-            ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-            ]);
-
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/profile');
-
-        $user->refresh();
-
-        $this->assertSame('Test User', $user->name);
-        $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        return User::factory()->create([
+            'role'       => 'iglesia',
+            'username'   => 'iglesia_test',
+            'iglesia_id' => $iglesia->id,
+            'email'      => 'iglesia_test@portal.local',
+        ]);
     }
 
-    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
+    // ─── Middleware: admin no puede acceder al portal iglesia ──
+
+    public function test_admin_cannot_access_iglesia_portal(): void
     {
-        $user = User::factory()->create();
+        $admin = User::factory()->create(['role' => 'admin']);
 
-        $response = $this
-            ->actingAs($user)
-            ->patch('/profile', [
-                'name' => 'Test User',
-                'email' => $user->email,
-            ]);
-
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/profile');
-
-        $this->assertNotNull($user->refresh()->email_verified_at);
+        $this->actingAs($admin)
+            ->get('/iglesia/dashboard')
+            ->assertStatus(403);
     }
 
-    public function test_user_can_delete_their_account(): void
+    // ─── Middleware: invitado redirige a login ──────────────────
+
+    public function test_guest_is_redirected_from_iglesia_portal(): void
     {
-        $user = User::factory()->create();
-
-        $response = $this
-            ->actingAs($user)
-            ->delete('/profile', [
-                'password' => 'password',
-            ]);
-
-        $response
-            ->assertSessionHasNoErrors()
-            ->assertRedirect('/');
-
-        $this->assertGuest();
-        $this->assertNull($user->fresh());
+        $this->get('/iglesia/dashboard')
+            ->assertRedirect('/login');
     }
 
-    public function test_correct_password_must_be_provided_to_delete_account(): void
+    // ─── Portal: iglesia ve su dashboard ───────────────────────
+
+    public function test_iglesia_user_can_see_dashboard(): void
     {
-        $user = User::factory()->create();
+        $iglesia = $this->makeIglesia();
+        $user    = $this->makeIglesiaUser($iglesia);
 
-        $response = $this
-            ->actingAs($user)
-            ->from('/profile')
-            ->delete('/profile', [
-                'password' => 'wrong-password',
-            ]);
+        $this->actingAs($user)
+            ->get('/iglesia/dashboard')
+            ->assertOk()
+            ->assertSee($iglesia->official_name);
+    }    // ─── Portal: iglesia ve índice de eventos ──────────────────
 
-        $response
-            ->assertSessionHasErrorsIn('userDeletion', 'password')
-            ->assertRedirect('/profile');
+    public function test_iglesia_user_can_see_eventos_index(): void
+    {
+        $iglesia = $this->makeIglesia();
+        $user    = $this->makeIglesiaUser($iglesia);
 
-        $this->assertNotNull($user->fresh());
+        $this->actingAs($user)
+            ->get('/iglesia/eventos')
+            ->assertOk();
+    }
+
+    // ─── Portal: iglesia ve formulario de creación de evento ───
+
+    public function test_iglesia_user_can_see_evento_create_form(): void
+    {
+        $iglesia = $this->makeIglesia();
+        $user    = $this->makeIglesiaUser($iglesia);
+
+        $this->actingAs($user)
+            ->get('/iglesia/eventos/create')
+            ->assertOk();
+    }
+
+    // ─── Portal: iglesia ve índice de emprendimientos ──────────
+
+    public function test_iglesia_user_can_see_emprendimientos_index(): void
+    {
+        $iglesia = $this->makeIglesia();
+        $user    = $this->makeIglesiaUser($iglesia);
+
+        $this->actingAs($user)
+            ->get('/iglesia/emprendimientos')
+            ->assertOk();
+    }
+
+    // ─── Admin: puede asignar credenciales a una iglesia ───────
+
+    public function test_admin_can_set_iglesia_credentials(): void
+    {
+        $admin   = User::factory()->create(['role' => 'admin']);
+        $iglesia = $this->makeIglesia();
+
+        $response = $this->actingAs($admin)->post(
+            route('admin.iglesias.credentials', $iglesia),
+            [
+                'username'              => 'nueva_iglesia',
+                'password'              => 'secret123',
+                'password_confirmation' => 'secret123',
+            ]
+        );
+
+        $response->assertRedirect(route('admin.iglesias.edit', $iglesia));
+
+        $this->assertDatabaseHas('users', [
+            'username'   => 'nueva_iglesia',
+            'role'       => 'iglesia',
+            'iglesia_id' => $iglesia->id,
+        ]);
+    }
+
+    // ─── Admin: duplicate username is rejected ─────────────────
+
+    public function test_duplicate_username_is_rejected(): void
+    {
+        $admin    = User::factory()->create(['role' => 'admin']);
+        $iglesia  = $this->makeIglesia();
+        $iglesia2 = Iglesia::create(['official_name' => 'Otra iglesia']);
+
+        // create first user with that username
+        User::factory()->create(['username' => 'ya_existe', 'role' => 'iglesia']);
+
+        $response = $this->actingAs($admin)->post(
+            route('admin.iglesias.credentials', $iglesia2),
+            [
+                'username'              => 'ya_existe',
+                'password'              => 'secret123',
+                'password_confirmation' => 'secret123',
+            ]
+        );
+
+        $response->assertSessionHasErrors('username');
     }
 }
+
