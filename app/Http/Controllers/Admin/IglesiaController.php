@@ -7,6 +7,7 @@ use App\Http\Requests\IglesiaRequest;
 use App\Models\Ayuda;
 use App\Models\Iglesia;
 use App\Models\User;
+use App\Services\GeocoderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,7 @@ use Illuminate\Http\Request;
 
 class IglesiaController extends Controller
 {
+    public function __construct(private readonly GeocoderService $geocoder) {}
     // ── Listado ───────────────────────────────────────────────
     public function index(\Illuminate\Http\Request $request): View
     {
@@ -69,6 +71,7 @@ class IglesiaController extends Controller
         return view('admin.iglesias.create', [
             'iglesia' => new Iglesia(),
             'ayudas'  => Ayuda::orderBy('nombre')->get(),
+            'parentCandidates' => Iglesia::whereNull('parent_id')->orderBy('official_name')->get(),
         ]);
     }
 
@@ -77,6 +80,9 @@ class IglesiaController extends Controller
     {
         $data = $request->validated();
         unset($data['photo']);
+
+        // Geocoding server-side: si lat/lng vienen vacíos, intentar geocodificar
+        $data = $this->autoGeocode($data);
 
         if ($request->hasFile('photo')) {
             $data['photo'] = $request->file('photo')->store('iglesias', 'public');
@@ -115,6 +121,7 @@ class IglesiaController extends Controller
             'ayudas'         => Ayuda::orderBy('nombre')->get(),
             'ayudasActuales' => $iglesia->ayudas->pluck('id')->toArray(),
             'linkedUser'     => User::where('iglesia_id', $iglesia->id)->first(),
+            'parentCandidates' => Iglesia::whereNull('parent_id')->where('id', '!=', $iglesia->id)->orderBy('official_name')->get(),
         ]);
     }
 
@@ -124,7 +131,17 @@ class IglesiaController extends Controller
         $this->authorize('update', $iglesia);
 
         $data = $request->validated();
+        // Prevent assigning itself as parent
+        if (isset($data['parent_id']) && $data['parent_id'] == $iglesia->id) {
+            return back()->withErrors(['parent_id' => 'La iglesia principal no puede ser la misma.'])->withInput();
+        }
         unset($data['photo']);
+
+        // Geocoding server-side: re-geocodificar si la dirección cambió y lat/lng están vacíos
+        $addressChanged = isset($data['address']) && $data['address'] !== $iglesia->address;
+        if ($addressChanged || empty($data['latitud']) || empty($data['longitud'])) {
+            $data = $this->autoGeocode($data);
+        }
 
         if ($request->hasFile('photo')) {
             if ($iglesia->photo) {
@@ -253,4 +270,33 @@ public function importStore(Request $request)
             ->with('error', 'Error inesperado durante la importación: ' . $e->getMessage());
     }
 }
+
+    // ── Helpers privados ──────────────────────────────────────────────
+    /**
+     * Geocodifica server-side si lat/lng están vacíos y hay una dirección válida.
+     * No sobreescribe coordenadas que el usuario ya proveyó explícitamente.
+     */
+    private function autoGeocode(array $data): array
+    {
+        $hasCoords = !empty($data['latitud']) && !empty($data['longitud'])
+            && $data['latitud'] != 2.9274 && $data['longitud'] != -75.2819;
+
+        if ($hasCoords) return $data;
+
+        $address = $data['address'] ?? '';
+        if (empty($address) || strlen($address) < 5) return $data;
+
+        $geocoded = $this->geocoder->geocode(
+            $address,
+            $data['municipality'] ?? 'Neiva',
+            $data['department']   ?? 'Huila',
+        );
+
+        if ($geocoded && $this->geocoder->isAcceptable($geocoded)) {
+            $data['latitud']  = $geocoded['lat'];
+            $data['longitud'] = $geocoded['lng'];
+        }
+
+        return $data;
+    }
 }

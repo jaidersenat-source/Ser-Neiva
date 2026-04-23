@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Iglesia;
 
 use App\Http\Controllers\Controller;
 use App\Models\Emprendimiento;
+use App\Services\GeocoderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Storage;
 
 class IglesiaEmprendimientoController extends Controller
 {
+    public function __construct(private readonly GeocoderService $geocoder) {}
+
     private function iglesiaId(): int
     {
         return auth()->user()->iglesia_id;
@@ -54,6 +57,8 @@ class IglesiaEmprendimientoController extends Controller
             $data['imagen_principal'] = $request->file('imagen_principal')
                 ->store('emprendimientos', 'public');
         }
+
+        $data = $this->autoGeocode($data);
 
         Emprendimiento::create($data);
 
@@ -101,6 +106,8 @@ class IglesiaEmprendimientoController extends Controller
                 ->store('emprendimientos', 'public');
         }
 
+        $data = $this->autoGeocode($data);
+
         $emprendimiento->update($data);
 
         return redirect()->route('iglesia.emprendimientos.index')
@@ -118,6 +125,24 @@ class IglesiaEmprendimientoController extends Controller
 
         return redirect()->route('iglesia.emprendimientos.index')
                          ->with('success', 'Emprendimiento eliminado.');
+    }
+
+    private function autoGeocode(array $data): array
+    {
+        $lat = $data['latitud'] ?? null;
+        $lng = $data['longitud'] ?? null;
+        $neiva = [2.9274, -75.2819];
+        $isEmpty = ($lat === null || $lat === '' || $lat === 0)
+            || ($lng === null || $lng === '' || $lng === 0)
+            || (abs((float)$lat - $neiva[0]) < 0.0001 && abs((float)$lng - $neiva[1]) < 0.0001);
+        if ($isEmpty && !empty($data['direccion'] ?? '')) {
+            $result = $this->geocoder->geocode($data['direccion'], 'Neiva', 'Huila');
+            if ($result && $this->geocoder->isAcceptable($result)) {
+                $data['latitud']  = $result['lat'];
+                $data['longitud'] = $result['lng'];
+            }
+        }
+        return $data;
     }
 
     private function uniqueSlug(string $nombre): string

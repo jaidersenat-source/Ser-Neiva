@@ -66,6 +66,7 @@ class Iglesia extends Model
         'longitud',
         // ── Foto ─────────────────────────────────────────────────
         'photo',
+        'parent_id',
     ];
 
     protected $casts = [
@@ -120,6 +121,18 @@ class Iglesia extends Model
     public function eventos()
     {
         return $this->hasMany(Evento::class);
+    }
+
+    /** Iglesia principal (si esta es una sede). */
+    public function parent()
+    {
+        return $this->belongsTo(Iglesia::class, 'parent_id');
+    }
+
+    /** Sedes/filiales de esta iglesia principal. */
+    public function children()
+    {
+        return $this->hasMany(Iglesia::class, 'parent_id');
     }
 
     public function emprendimientos()

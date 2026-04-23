@@ -74,6 +74,24 @@
                 @error('denomination')<p class="flex items-center gap-1.5 text-xs font-semibold text-red-500 mt-1.5">{!! errIcon() !!} {{ $message }}</p>@enderror
             </div>
             <div>
+                <label class="{{ $lbl }}" for="parent_id">Iglesia principal</label>
+                <div class="relative">
+                    <select id="parent_id" name="parent_id" class="{{ $inp }} appearance-none pr-9 cursor-pointer">
+                        <option value="">— Ninguna (esta es principal) —</option>
+                        @isset($parentCandidates)
+                            @foreach($parentCandidates as $pc)
+                                <option value="{{ $pc->id }}" {{ (string) old('parent_id', $iglesia->parent_id ?? '') === (string) $pc->id ? 'selected' : '' }}>{{ $pc->official_name }} @if($pc->municipality) — {{ $pc->municipality }}@endif</option>
+                            @endforeach
+                        @endisset
+                    </select>
+                    <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Si esta iglesia es una sede/filial, selecciona su iglesia principal.</p>
+                @error('parent_id')<p class="flex items-center gap-1.5 text-xs font-semibold text-red-500 mt-1.5">{!! errIcon() !!} {{ $message }}</p>@enderror
+            </div>
+            <div>
                 <label class="{{ $lbl }}" for="confessional_character">Carácter confesional</label>
                 <div class="relative">
                     <select id="confessional_character" name="confessional_character"
@@ -195,6 +213,7 @@
                       class="absolute right-3 top-1/2 -translate-y-1/2 hidden pointer-events-none"></span>
             </div>
             <p id="geo-status-msg" class="text-xs mt-1.5 hidden"></p>
+            <span id="precision-badge" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full mt-1 inline-block"></span>
             @error('address')<p class="flex items-center gap-1.5 text-xs font-semibold text-red-500 mt-1.5">{!! errIcon() !!} {{ $message }}</p>@enderror
         </div>
 
@@ -801,8 +820,9 @@
 ════════════════════════════════════════════════════════════ */
 (function () {
     const NEIVA       = [2.9274, -75.2819];
-    const NOMINATIM   = 'https://nominatim.openstreetmap.org';
     const DEBOUNCE_MS = 600;
+    const GEOCODE_URL         = '/api/geocode';
+    const GEOCODE_REVERSE_URL = '/api/geocode/reverse';
 
     const latInput  = document.getElementById('latitud');
     const lngInput  = document.getElementById('longitud');
@@ -857,43 +877,77 @@
 
     function debounce(fn, delay) { let t; return function(...a){ clearTimeout(t); t=setTimeout(()=>fn.apply(this,a),delay); }; }
 
-    async function geocodificarDireccion(query) {
-        if(!query||query.trim().length<5){return;}
-        geoSetBuscando();
-        const mun = munSelect ? munSelect.value : 'Neiva';
-        const url = new URL(NOMINATIM+'/search');
-        url.searchParams.set('q', query.trim()+', '+ mun +', Huila, Colombia');
-        url.searchParams.set('format','json'); url.searchParams.set('limit','1');
-        url.searchParams.set('countrycodes','co'); url.searchParams.set('accept-language','es');
-        try {
-            const res = await fetch(url.toString(), {headers:{'Accept':'application/json'}});
-            const data = await res.json();
-            if(!data||!data.length){geoSetError('No se encontró la dirección.');return;}
-            const lugar=data[0];
-            aplicarCoordenadas(parseFloat(lugar.lat), parseFloat(lugar.lon), 17);
-            geoSetOk(lugar.display_name.split(',').slice(0,3).join(','));
-        } catch(e){geoSetError('Error al buscar. Intenta de nuevo.');}
+    // ── Precision badge ──────────────────────────────────────────────
+    const precisionBadge = document.getElementById('precision-badge');
+    const PRECISION_CFG = {
+        exact:        { label: '✓ Alta precisión',     bg: '#dcfce7', color: '#15803d' },
+        interpolated: { label: '~ Precisión media',    bg: '#fef9c3', color: '#854d0e' },
+        center:       { label: '◎ Área aproximada',    bg: '#fef3c7', color: '#b45309' },
+        approximate:  { label: '⚠ Baja precisión',     bg: '#fee2e2', color: '#b91c1c' },
+    };
+    function mostrarPrecisionBadge(precision, warning) {
+        if (!precisionBadge) return;
+        const cfg = PRECISION_CFG[precision] || PRECISION_CFG.approximate;
+        precisionBadge.textContent = cfg.label;
+        precisionBadge.style.background = cfg.bg;
+        precisionBadge.style.color      = cfg.color;
+        precisionBadge.classList.remove('hidden');
+        if (warning && geoMsg) {
+            geoMsg.style.display = 'block';
+            geoMsg.style.color   = cfg.color;
+            geoMsg.textContent   = warning;
+        }
     }
 
-    async function reverseGeocodificar(lat, lng) {
-        const url = new URL(NOMINATIM+'/reverse');
-        url.searchParams.set('lat',lat.toFixed(8)); url.searchParams.set('lon',lng.toFixed(8));
-        url.searchParams.set('format','json'); url.searchParams.set('accept-language','es');
+    // ── Geocodificación forward (dirección → lat/lng) ────────────────
+    async function geocodificarDireccion(query) {
+        if (!query || query.trim().length < 5) return;
+        geoSetBuscando();
+        const mun = munSelect ? munSelect.value : 'Neiva';
         try {
-            const res=await fetch(url.toString(),{headers:{'Accept':'application/json'}});
-            const data=await res.json();
-            if(data&&data.address){
-                const a=data.address;
-                const partes=[a.road||a.pedestrian||'',a.house_number||'',a.suburb||a.neighbourhood||''].filter(Boolean);
-                const addr=partes.join(', ');
-                if(addr){
-                    dirInput.removeEventListener('input',debouncedGeocodificar);
-                    dirInput.value=addr;
-                    dirInput.addEventListener('input',debouncedGeocodificar);
-                    geoSetOk('Dirección actualizada desde el mapa');
-                }
+            const res = await fetch(GEOCODE_URL, {
+                method:  'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept':       'application/json',
+                },
+                body: JSON.stringify({ address: query.trim(), municipality: mun, department: 'Huila' }),
+            });
+            const data = await res.json();
+            if (!data.success) { geoSetError(data.message || 'No se encontró la dirección.'); return; }
+            aplicarCoordenadas(data.lat, data.lng, 17);
+            mostrarPrecisionBadge(data.precision, data.warning);
+            if (!data.warning) geoSetOk(data.formatted.split(',').slice(0, 3).join(','));
+            // Mostrar dirección normalizada si difiere del input
+            if (data.normalized && data.normalized !== query.trim()) {
+                dirInput.title = 'Normalizado: ' + data.normalized;
             }
-        } catch(e){}
+        } catch (e) { geoSetError('Error de conexión. Intenta de nuevo.'); }
+    }
+
+    // ── Geocodificación inversa (lat/lng → dirección) ────────────────
+    async function reverseGeocodificar(lat, lng) {
+        try {
+            const res = await fetch(GEOCODE_REVERSE_URL, {
+                method:  'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept':       'application/json',
+                },
+                body: JSON.stringify({ lat, lng }),
+            });
+            const data = await res.json();
+            if (!data.success) return;
+            const partes = [data.route, data.street_number, data.neighborhood].filter(Boolean);
+            const addr   = partes.join(', ');
+            if (addr) {
+                dirInput.removeEventListener('input', debouncedGeocodificar);
+                dirInput.value = addr;
+                dirInput.addEventListener('input', debouncedGeocodificar);
+                geoSetOk('Dirección actualizada desde el mapa');
+                if (precisionBadge) precisionBadge.classList.add('hidden');
+            }
+        } catch (e) {}
     }
 
     marker.on('dragend', function(e){

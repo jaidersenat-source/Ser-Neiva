@@ -231,7 +231,8 @@ document.addEventListener('DOMContentLoaded', function(){
     <script>
     (function(){
         const NEIVA = [2.9274, -75.2819];
-        const NOMINATIM = 'https://nominatim.openstreetmap.org';
+        const GEOCODE_URL         = '/api/geocode';
+        const GEOCODE_REVERSE_URL = '/api/geocode/reverse';
         const DEBOUNCE_MS = 600;
 
         const latInput = document.getElementById('latitud');
@@ -269,34 +270,17 @@ document.addEventListener('DOMContentLoaded', function(){
 
         async function geocodificarDireccion(q){
             if (!q || q.trim().length < 3) return;
-            // Clean query and avoid duplicating city if user already included it
-            var query = q.trim();
-            if (!/neiva/i.test(query)) query = query + ', Neiva, Huila, Colombia';
-            // Build URL
-            const url = new URL(NOMINATIM + '/search');
-            url.searchParams.set('q', query);
-            url.searchParams.set('format','json'); url.searchParams.set('limit','3'); url.searchParams.set('countrycodes','co'); url.searchParams.set('accept-language','es');
             try{
-                console.log('Geocoding query:', query, url.toString());
-                const res = await fetch(url.toString()); const data = await res.json();
-                if (!data || !data.length) { showGeocodeResults([]); return; }
-
-                // If multiple results, show a chooser so user can pick the exact match
-                if (data.length > 1) {
-                    showGeocodeResults(data.slice(0,5));
-                    // still pick the heuristic-best to preview
-                    var bestPreview = data[0];
-                    for (var i=0;i<data.length;i++){ var t=(data[i].type||'').toLowerCase(); if(t==='house'||t==='residential'||t==='building'){ bestPreview = data[i]; break; } }
-                    aplicarCoordenadas(bestPreview.lat, bestPreview.lon, 15);
-                    marker.bindPopup(bestPreview.display_name || '').openPopup();
-                    return;
-                }
-
-                // Single result -> apply directly
-                const single = data[0];
+                const res = await fetch(GEOCODE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ address: q.trim(), municipality: 'Neiva', department: 'Huila' }),
+                });
+                const data = await res.json();
+                if (!data.success) { showGeocodeResults([]); return; }
                 showGeocodeResults([]);
-                aplicarCoordenadas(single.lat, single.lon, 17);
-                if (single.display_name) marker.bindPopup(single.display_name).openPopup();
+                aplicarCoordenadas(data.lat, data.lng, 17);
+                marker.bindPopup(data.formatted || '').openPopup();
             }catch(e){ console.error('geo error', e); }
         }
 
@@ -325,14 +309,16 @@ document.addEventListener('DOMContentLoaded', function(){
         }
 
         async function reverseGeocodificar(lat,lng){
-            const url = new URL(NOMINATIM + '/reverse');
-            url.searchParams.set('lat', lat.toFixed(8)); url.searchParams.set('lon', lng.toFixed(8)); url.searchParams.set('format','json'); url.searchParams.set('accept-language','es');
             try{
-                const res = await fetch(url.toString()); const data = await res.json();
-                if (data && data.address){
-                    const a = data.address; const texto = [a.road||a.pedestrian||'', a.house_number||'', a.suburb||a.neighbourhood||''].filter(Boolean).join(', ');
-                    if (texto){ dirInput.removeEventListener('input', debouncedGeo); dirInput.value = texto; dirInput.addEventListener('input', debouncedGeo); }
-                }
+                const res = await fetch(GEOCODE_REVERSE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ lat, lng }),
+                });
+                const data = await res.json();
+                if (!data.success) return;
+                const texto = [data.route, data.street_number, data.neighborhood].filter(Boolean).join(', ');
+                if (texto){ dirInput.removeEventListener('input', debouncedGeo); dirInput.value = texto; dirInput.addEventListener('input', debouncedGeo); }
             }catch(e){ /* silent */ }
         }
 

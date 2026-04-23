@@ -394,8 +394,9 @@
 
     /* ── Constantes ─────────────────────────────────────────── */
     const NEIVA       = [2.9274, -75.2819];
-    const NOMINATIM   = 'https://nominatim.openstreetmap.org';
     const DEBOUNCE_MS = 600;
+    const GEOCODE_URL         = '/api/geocode';
+    const GEOCODE_REVERSE_URL = '/api/geocode/reverse';
 
     /* ── DOM ────────────────────────────────────────────────── */
     const latInput  = document.getElementById('latitud');
@@ -466,36 +467,36 @@
     async function geocodificarDireccion(query) {
         if (!query || query.trim().length < 5) { geoHide(); return; }
         geoSet('loading');
-        const url = new URL(NOMINATIM + '/search');
-        url.searchParams.set('q',               query.trim() + ', Neiva, Huila, Colombia');
-        url.searchParams.set('format',          'json');
-        url.searchParams.set('limit',           '1');
-        url.searchParams.set('countrycodes',    'co');
-        url.searchParams.set('accept-language', 'es');
         try {
-            const data = await (await fetch(url.toString())).json();
-            if (!data || !data.length) { geoSet('error', 'No se encontró la dirección. Intenta con más detalles.'); return; }
-            aplicarCoordenadas(parseFloat(data[0].lat), parseFloat(data[0].lon), 17);
-            geoSet('ok', (data[0].display_name || '').split(',').slice(0,3).join(','));
-        } catch { geoSet('error', 'Error de red. Intenta de nuevo.'); }
+            const res = await fetch(GEOCODE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ address: query.trim(), municipality: 'Neiva', department: 'Huila' }),
+            });
+            const data = await res.json();
+            if (!data.success) { geoSet('error', data.message || 'No se encontró la dirección.'); return; }
+            aplicarCoordenadas(data.lat, data.lng, 17);
+            const precision = { exact: '✓ Alta precisión', interpolated: '~ Precisión media', center: '◎ Área aproximada', approximate: '⚠ Baja precisión' }[data.precision] || '';
+            geoSet('ok', precision + ' — ' + (data.formatted || '').split(',').slice(0,3).join(','));
+        } catch { geoSet('error', 'Error de conexión. Intenta de nuevo.'); }
     }
 
     /* ── Reverse geocoding ──────────────────────────────────── */
     async function reverseGeocodificar(lat, lng) {
-        const url = new URL(NOMINATIM + '/reverse');
-        url.searchParams.set('lat', lat.toFixed(8)); url.searchParams.set('lon', lng.toFixed(8));
-        url.searchParams.set('format','json'); url.searchParams.set('accept-language','es');
         try {
-            const data = await (await fetch(url.toString())).json();
-            if (data && data.address) {
-                const a = data.address;
-                const texto = [a.road||a.pedestrian||'', a.house_number||'', a.suburb||a.neighbourhood||''].filter(Boolean).join(', ');
-                if (texto) {
-                    dirInput.removeEventListener('input', debouncedGeo);
-                    dirInput.value = texto;
-                    dirInput.addEventListener('input', debouncedGeo);
-                    geoSet('ok', 'Dirección actualizada desde el mapa');
-                }
+            const res = await fetch(GEOCODE_REVERSE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ lat, lng }),
+            });
+            const data = await res.json();
+            if (!data.success) return;
+            const texto = [data.route, data.street_number, data.neighborhood].filter(Boolean).join(', ');
+            if (texto) {
+                dirInput.removeEventListener('input', debouncedGeo);
+                dirInput.value = texto;
+                dirInput.addEventListener('input', debouncedGeo);
+                geoSet('ok', 'Dirección actualizada desde el mapa');
             }
         } catch { /* silencioso */ }
     }

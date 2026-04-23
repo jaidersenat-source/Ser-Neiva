@@ -178,6 +178,32 @@
             Campañas de Correo
         </a>
 
+        <a href="{{ route('admin.blogs.index') }}"
+           class="nav-item {{ request()->routeIs('admin.blogs.*') ? 'active' : '' }}">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+            </svg>
+            Blog
+            @php $totalBlogs = \App\Models\Blog::count(); @endphp
+            @if($totalBlogs > 0)
+                <span class="nav-badge">{{ $totalBlogs }}</span>
+            @endif
+        </a>
+
+        <a href="{{ route('admin.church-requests.index') }}"
+           class="nav-item {{ request()->routeIs('admin.church-requests.*') ? 'active' : '' }}">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            Solicitudes
+            @php $pendientes = \App\Models\ChurchRequest::where('estado','pendiente')->count(); @endphp
+            @if($pendientes > 0)
+                <span class="nav-badge" style="background:#f59e0b;color:#fff;">{{ $pendientes }}</span>
+            @endif
+        </a>
+
         <div class="nav-divider"></div>
 
         {{-- ── ACCESOS ── --}}

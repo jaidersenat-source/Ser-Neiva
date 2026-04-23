@@ -235,6 +235,13 @@
     </div>
 </div>
 
+@if(config('services.google.maps_key'))
+@push('scripts')
+<script src="https://unpkg.com/leaflet.gridlayer.googlemutant@0.14.0/dist/Leaflet.GoogleMutant.js"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_key') }}&callback=_initGoogleBasemap&language=es"></script>
+@endpush
+@endif
+
 @push('scripts')
 <script>
 /* ════════════════════════════════════════════════════════════════
@@ -297,10 +304,21 @@ const map = L.map('map', {
     zoomControl: false,
 });
 L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+@if(config('services.google.maps_key'))
+{{-- Basemap de Google: inicializa via callback cuando carga la API --}}
+window._initGoogleBasemap = function() {
+    if (window.L && L.gridLayer && L.gridLayer.googleMutant) {
+        L.gridLayer.googleMutant({ type: 'roadmap', maxZoom: 20 }).addTo(map);
+    }
+};
+@else
+{{-- OpenStreetMap (predeterminado, gratuito) --}}
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
     maxZoom: 19,
 }).addTo(map);
+@endif
 
 function recentrarMapa() {
     map.flyTo(NEIVA_CENTER, isMobile() ? 12 : 13, { duration: 1.2 });

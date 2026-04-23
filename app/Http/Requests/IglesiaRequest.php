@@ -70,6 +70,7 @@ class IglesiaRequest extends FormRequest
             // ── Geolocalización ───────────────────────────────
             'latitud'  => ['required', 'numeric', 'between:-90,90'],
             'longitud' => ['required', 'numeric', 'between:-180,180'],
+            'parent_id' => ['nullable', 'integer', 'exists:iglesias,id'],
 
             // ── Foto ─────────────────────────────────────────────
             'photo'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],

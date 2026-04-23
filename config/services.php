@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    // Google Maps / Geocoding API
+    'google' => [
+        'maps_key' => env('GOOGLE_MAPS_API_KEY', ''),
+    ],
+
 ];

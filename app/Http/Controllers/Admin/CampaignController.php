@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse as HttpRedirectResponse;
 
 class CampaignController extends Controller
 {
@@ -128,6 +129,30 @@ class CampaignController extends Controller
         return redirect()
             ->route('admin.campaigns.index')
             ->with('success', 'Campaña eliminada correctamente.');
+    }
+
+    /**
+     * Purge sent campaigns older than X days. Accepts POST param `days` (int).
+     */
+    public function purgeOld(Request $request): RedirectResponse
+    {
+        $days = (int) $request->input('days', 90);
+        if ($days <= 0) $days = 90;
+
+        $cutoff = now()->subDays($days);
+        $toDelete = Campaign::whereNotNull('sent_at')->where('sent_at', '<', $cutoff)->get();
+        $count = 0;
+        foreach ($toDelete as $campaign) {
+            // delete images from storage
+            foreach ($campaign->images as $image) {
+                Storage::disk('public')->delete($image->path);
+            }
+            $campaign->delete();
+            $count++;
+        }
+
+        return redirect()->route('admin.campaigns.index')
+            ->with('success', "Se eliminaron {$count} campañas enviadas hace más de {$days} días.");
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Iglesia;
 
 use App\Http\Controllers\Controller;
 use App\Models\Iglesia;
+use App\Services\GeocoderService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 
 class IglesiaPortalController extends Controller
 {
+    public function __construct(private readonly GeocoderService $geocoder) {}
     /**
      * Dashboard principal del portal iglesia.
      */
@@ -144,6 +146,22 @@ class IglesiaPortalController extends Controller
                 Storage::disk('public')->delete($iglesia->photo);
             }
             $data['photo'] = $request->file('photo')->store('iglesias', 'public');
+        }
+
+        // Geocoding server-side: re-geocodificar si lat/lng están vacíos
+        $hasCoords = !empty($data['latitud']) && !empty($data['longitud'])
+            && $data['latitud'] != 2.9274 && $data['longitud'] != -75.2819;
+
+        if (!$hasCoords && !empty($data['address'])) {
+            $geocoded = $this->geocoder->geocode(
+                $data['address'],
+                $data['municipality'] ?? 'Neiva',
+                $data['department']   ?? 'Huila',
+            );
+            if ($geocoded && $this->geocoder->isAcceptable($geocoded)) {
+                $data['latitud']  = $geocoded['lat'];
+                $data['longitud'] = $geocoded['lng'];
+            }
         }
 
         // Guardar los cambios principales

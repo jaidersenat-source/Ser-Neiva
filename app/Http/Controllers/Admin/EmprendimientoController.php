@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Emprendimiento;
 use App\Models\Iglesia;
+use App\Services\GeocoderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class EmprendimientoController extends Controller
 {
+    public function __construct(private readonly GeocoderService $geocoder) {}
+
     public function index()
     {
         $emprendimientos = Emprendimiento::with('iglesia')->latest()->paginate(20);
@@ -56,6 +59,8 @@ class EmprendimientoController extends Controller
             $path = $request->file('imagen_principal')->store('emprendimientos', 'public');
             $data['imagen_principal'] = $path;
         }
+        // Auto-geocode if coordinates empty
+        $data = $this->autoGeocode($data);
         // Normalize lat/lng to floats or null
         $data['latitud'] = isset($data['latitud']) && $data['latitud'] !== null && $data['latitud'] !== '' ? (float) $data['latitud'] : null;
         $data['longitud'] = isset($data['longitud']) && $data['longitud'] !== null && $data['longitud'] !== '' ? (float) $data['longitud'] : null;
@@ -123,12 +128,32 @@ class EmprendimientoController extends Controller
             $data['slug'] = $this->generateUniqueSlug($data['nombre'], $emprendimiento->id);
         }
 
+        // Auto-geocode if coordinates empty
+        $data = $this->autoGeocode($data);
         // Normalize lat/lng to floats or null
         $data['latitud'] = isset($data['latitud']) && $data['latitud'] !== null && $data['latitud'] !== '' ? (float) $data['latitud'] : null;
         $data['longitud'] = isset($data['longitud']) && $data['longitud'] !== null && $data['longitud'] !== '' ? (float) $data['longitud'] : null;
 
         $emprendimiento->update($data);
         return redirect()->route('admin.emprendimientos.index')->with('success', 'Emprendimiento actualizado correctamente.');
+    }
+
+    private function autoGeocode(array $data): array
+    {
+        $lat = $data['latitud'] ?? null;
+        $lng = $data['longitud'] ?? null;
+        $neiva = [2.9274, -75.2819];
+        $isEmpty = ($lat === null || $lat === '' || $lat === 0)
+            || ($lng === null || $lng === '' || $lng === 0)
+            || (abs((float)$lat - $neiva[0]) < 0.0001 && abs((float)$lng - $neiva[1]) < 0.0001);
+        if ($isEmpty && !empty($data['direccion'] ?? '')) {
+            $result = $this->geocoder->geocode($data['direccion'], 'Neiva', 'Huila');
+            if ($result && $this->geocoder->isAcceptable($result)) {
+                $data['latitud']  = $result['lat'];
+                $data['longitud'] = $result['lng'];
+            }
+        }
+        return $data;
     }
 
     /**

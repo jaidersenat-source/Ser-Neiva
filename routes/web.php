@@ -8,8 +8,13 @@ use App\Http\Controllers\Admin\SportsVenueController;
 use App\Http\Controllers\MapaController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\EventoController;
+use App\Http\Controllers\ConsentController;
 use App\Http\Controllers\Admin\EmprendimientoController;
 use App\Http\Controllers\DecretoController;
+use App\Http\Controllers\Admin\BlogController;
+use App\Http\Controllers\BlogPublicoController;
+use App\Http\Controllers\ChurchRequestController;
+use App\Http\Controllers\Admin\ChurchRequestAdminController;
 
 // Página de inicio pública (pasar coordenadas para preview del mapa)
 Route::get('/', function () {
@@ -21,11 +26,35 @@ Route::get('/', function () {
             return [$i->latitud, $i->longitud];
         })->toArray();
 
-    return view('home', ['previewPoints' => $points]);
+    $recentPosts = \App\Models\Blog::with('autor')
+        ->publicados()
+        ->orderByDesc('published_at')
+        ->limit(3)
+        ->get();
+
+    return view('home', ['previewPoints' => $points, 'recentPosts' => $recentPosts]);
 })->name('home');
 
 // Mapa público (sin autenticación)
 Route::get('/mapa', [MapaController::class, 'index'])->name('mapa.index');
+
+// Blog público
+Route::get('/blog', [BlogPublicoController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogPublicoController::class, 'show'])->name('blog.show');
+
+// Registro público de iglesias / organizaciones religiosas
+Route::post('/registro-iglesia', [ChurchRequestController::class, 'store'])->name('church-request.store');
+
+// Página pública de la Política de Tratamiento de Datos
+Route::get('/politica-de-datos', function () {
+    return view('consent.policy');
+})->name('consent.policy');
+
+// Consentimiento de términos (solo para usuarios autenticados rol iglesia)
+Route::middleware(['auth', 'role.iglesia'])->group(function () {
+    Route::get('/consentimiento',  [ConsentController::class, 'show'])->name('consent.show');
+    Route::post('/consentimiento', [ConsentController::class, 'store'])->name('consent.store');
+});
 
 // Panel Administrativo (requiere autenticación)
 use App\Http\Middleware\EnsureIsAdmin;
@@ -69,6 +98,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'verified', EnsureIs
     Route::resource('campaigns', CampaignController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
     Route::post('campaigns/{campaign}/send', [CampaignController::class, 'send'])->name('campaigns.send');
     Route::post('campaigns/upload-image', [CampaignController::class, 'uploadImage'])->name('campaigns.upload-image');
+    Route::post('campaigns/purge-old', [CampaignController::class, 'purgeOld'])->name('campaigns.purge-old');
+
+    // === BLOG ===
+    Route::resource('blogs', BlogController::class);
+
+    // === SOLICITUDES DE REGISTRO DE IGLESIAS ===
+    Route::get('church-requests', [ChurchRequestAdminController::class, 'index'])->name('church-requests.index');
+    Route::get('church-requests/{churchRequest}', [ChurchRequestAdminController::class, 'show'])->name('church-requests.show');
+    Route::patch('church-requests/{churchRequest}', [ChurchRequestAdminController::class, 'update'])->name('church-requests.update');
+    Route::delete('church-requests/{churchRequest}', [ChurchRequestAdminController::class, 'destroy'])->name('church-requests.destroy');
 });
 
 // Reemplaza la ruta dashboard por defecto de Breeze
@@ -80,7 +119,7 @@ Route::get('/dashboard', function () {
 })->middleware(['auth'])->name('dashboard');
 
 // ══ Portal Iglesia ══
-Route::prefix('iglesia')->name('iglesia.')->middleware(['auth', 'role.iglesia'])->group(function () {
+Route::prefix('iglesia')->name('iglesia.')->middleware(['auth', 'role.iglesia', 'consents'])->group(function () {
     Route::get('/dashboard',          [\App\Http\Controllers\Iglesia\IglesiaPortalController::class, 'dashboard'])->name('dashboard');
     Route::resource('eventos',        \App\Http\Controllers\Iglesia\IglesiaEventoController::class);
     Route::resource('emprendimientos',\App\Http\Controllers\Iglesia\IglesiaEmprendimientoController::class);

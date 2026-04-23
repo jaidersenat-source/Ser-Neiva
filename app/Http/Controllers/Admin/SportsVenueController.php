@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SportsVenueRequest;
 use App\Models\SportsVenue;
+use App\Services\GeocoderService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class SportsVenueController extends Controller
 {
+    public function __construct(private readonly GeocoderService $geocoder) {}
+
     public function index(): View
     {
         $venues = SportsVenue::latest()->paginate(15);
@@ -37,6 +40,8 @@ class SportsVenueController extends Controller
             $path = $request->file('imagen_principal')->store('sports_venues', 'public');
             $data['imagen_principal'] = $path;
         }
+
+        $data = $this->autoGeocode($data);
 
         SportsVenue::create($data);
 
@@ -66,11 +71,30 @@ class SportsVenueController extends Controller
             $data['imagen_principal'] = $path;
         }
 
+        $data = $this->autoGeocode($data);
+
         $sports_venue->update($data);
 
         return redirect()
             ->route('admin.sports_venues.index')
             ->with('success', "Escenario «{$sports_venue->name}» actualizado correctamente.");
+    }
+
+    private function autoGeocode(array $data): array
+    {
+        $lat = $data['latitude'] ?? null;
+        $lng = $data['longitude'] ?? null;
+        $neiva = [2.9274, -75.2819];
+        $isEmpty = empty($lat) || empty($lng)
+            || (abs((float)$lat - $neiva[0]) < 0.0001 && abs((float)$lng - $neiva[1]) < 0.0001);
+        if ($isEmpty && !empty($data['address'] ?? '')) {
+            $result = $this->geocoder->geocode($data['address'], 'Neiva', 'Huila');
+            if ($result && $this->geocoder->isAcceptable($result)) {
+                $data['latitude']  = $result['lat'];
+                $data['longitude'] = $result['lng'];
+            }
+        }
+        return $data;
     }
 
     public function destroy(SportsVenue $sports_venue): RedirectResponse

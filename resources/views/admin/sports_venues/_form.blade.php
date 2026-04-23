@@ -246,26 +246,24 @@
         if (state === 'error')   errIcon.classList.remove('hidden');
     }
 
-    function geocode(query) {
-        var url = 'https://nominatim.openstreetmap.org/search?' + new URLSearchParams({
-            q:              query + ', Neiva, Huila, Colombia',
-            format:         'json',
-            limit:          '1',
-            addressdetails: '0',
-        });
+    const GEOCODE_URL = '/api/geocode';
 
-        fetch(url, { headers: { 'Accept-Language': 'es', 'User-Agent': 'SIRN-Neiva/1.0' } })
-            .then(function(r){ return r.json(); })
-            .then(function(data) {
-                if (data.length > 0) {
-                    latInput.value = parseFloat(data[0].lat).toFixed(7);
-                    lngInput.value = parseFloat(data[0].lon).toFixed(7);
-                    setGeoState('ok');
-                } else {
-                    setGeoState('error');
-                }
-            })
-            .catch(function() { setGeoState('error'); });
+    async function geocode(query) {
+        try {
+            const res = await fetch(GEOCODE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ address: query + ', Neiva, Huila, Colombia', municipality: 'Neiva', department: 'Huila' }),
+            });
+            const data = await res.json();
+            if (data && data.success) {
+                latInput.value = parseFloat(data.lat).toFixed(7);
+                lngInput.value = parseFloat(data.lng).toFixed(7);
+                setGeoState('ok');
+            } else {
+                setGeoState('error');
+            }
+        } catch { setGeoState('error'); }
     }
 
     if (addressInput) {
